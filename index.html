@@ -486,7 +486,7 @@ $("#gran").onclick=()=>claimGrandma();
 /* ---------- rocket ---------- */
 const rc=$("#rc"),dpr=Math.min(1.5,devicePixelRatio||1);
 const MAX_ROCKET_MULTIPLIER=1000,MAX_ROCKET_TIME=Math.log(MAX_ROCKET_MULTIPLIER)/.15;
-const R={on:false,bet:0,cashed:false,crash:1,m:1,t:0,auto:0,t0:0,serverRoundId:null,pollBusy:false,lastPoll:0,lastServerSync:0,pollDelay:1000,syncStale:false,settled:false,cashPending:false,rafId:0,lastPaint:0,lastBotTick:0,lastDrawKey:''};
+const R={on:false,bet:0,cashed:false,crash:1,m:1,t:0,auto:0,t0:0,serverRoundId:null,serverT:0,serverSyncMono:0,pollBusy:false,lastPoll:0,lastServerSync:0,pollDelay:1000,syncStale:false,settled:false,cashPending:false,rafId:0,lastPaint:0,lastBotTick:0,lastDrawKey:''};
 function rsz(){rc.width=Math.max(1,Math.floor(rc.clientWidth*dpr));rc.height=Math.max(1,Math.floor(rc.clientHeight*dpr))}
 function rdraw(){rsz();draw(R.t,R.m,!R.on&&R.m>1&&R.crash==R.m)}
 addEventListener("resize",()=>{if(!$("#rocket").hidden)rdraw()});
@@ -510,9 +510,14 @@ function rloop(frameNow){
  if(cloudRound){
   if(!R.pollBusy&&stamp-(R.lastPoll||0)>=(R.pollDelay||1000)){R.lastPoll=stamp;pollCloudRocket()}
   if(stamp-(R.lastServerSync||0)>3500&&!R.syncStale){R.syncStale=true;$('#rmsg').textContent='⚠️ Нет ответа игрового сервера. Множитель заморожен до подтверждения результата.'}
-  // Online display always uses the last multiplier confirmed by Supabase.
-  t=Number.isFinite(R.t)?Math.max(0,Math.min(MAX_ROCKET_TIME,R.t)):0;
-  m=Number.isFinite(R.m)?Math.min(MAX_ROCKET_MULTIPLIER,Math.max(1,R.m)):1;
+  // Smooth visual interpolation between authoritative Supabase snapshots.
+  // This estimate is display-only: cashout and crash results are still decided by RPC.
+  const baseT=Number.isFinite(R.serverT)?Math.max(0,R.serverT):0;
+  const syncAge=Math.max(0,(now-(R.serverSyncMono||now))/1000);
+  const visualLead=R.syncStale?Math.min(syncAge,1.1):Math.min(syncAge,1.1);
+  t=Math.min(MAX_ROCKET_TIME,baseT+visualLead);
+  m=Math.min(MAX_ROCKET_MULTIPLIER,Math.max(1,Math.exp(.15*t)));
+  R.t=t;R.m=m;
  }else{
   const crash=Number.isFinite(R.crash)?Math.max(1,Math.min(MAX_ROCKET_MULTIPLIER,R.crash)):1;
   const crashTime=Math.log(crash)/.15;
@@ -520,8 +525,8 @@ function rloop(frameNow){
   if(m>=crash)return rcrash();
  }
  if(R.auto&&!R.cashed&&!cloudRound&&m>=R.auto)cash(R.auto);
- // Paint at 30 fps, update simulated bot rows at 4 fps; don't repaint hidden rocket UI.
- if(now-(R.lastPaint||0)>=1000/30){
+ // Paint smoothly at up to 60 fps; simulated bot rows still update at 4 Hz.
+ if(now-(R.lastPaint||0)>=1000/60){
   R.lastPaint=now;
   if(!$('#rocket').hidden){
    const multText=m.toFixed(2)+'x';if($('#mult').textContent!==multText)$('#mult').textContent=multText;
@@ -546,15 +551,15 @@ async function cash(m){
    const result=await cloudRpc('fantik_rocket_cashout',{p_round_id:roundId});
    if(!R.on||R.serverRoundId!==roundId)return;
    if(result.status==='lost'||result.status==='round_over'){
-    R.crash=Math.max(1,Math.min(1000,Number(result.multiplier)||1));R.m=R.crash;R.t=Math.log(R.m)/.15;R.cashed=result.status==='round_over'||R.cashed;
+    R.crash=Math.max(1,Math.min(1000,Number(result.multiplier)||1));R.m=R.crash;R.t=Math.log(R.m)/.15;R.serverT=R.t;R.serverSyncMono=performance.now();R.cashed=result.status==='round_over'||R.cashed;
     if(Number.isFinite(Number(result.balance))){bal=Number(result.balance);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal)}
     R.lastServerSync=Date.now();rcrash();return;
    }
    if(result.status!=='cashed')throw new Error('Неизвестный статус раунда: '+String(result.status));
-   R.cashed=true;R.lastServerSync=Date.now();R.syncStale=false;
+   R.cashed=true;R.serverT=Math.log(Math.max(1,Number(result.multiplier)||1))/.15;R.t=R.serverT;R.serverSyncMono=performance.now();R.lastServerSync=Date.now();R.syncStale=false;
    bal=Number(result.balance);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);
    const pay=Number(result.payout),mult=Number(result.multiplier),pr=pay-R.bet;
-   R.m=Math.max(1,Math.min(1000,mult));R.t=Math.log(R.m)/.15;
+   R.m=Math.max(1,Math.min(1000,mult));R.t=Math.log(R.m)/.15;R.serverT=R.t;R.serverSyncMono=performance.now();
    ACC.pendingRocket=null;ACC.stats=ACC.stats||{};ACC.stats.rocketWins=(ACC.stats.rocketWins||0)+1;
    recordAction('rocket',`Вывод на ${mult.toFixed(2)}x`,pay);addXP(Math.max(5,Math.floor(pay/500)));
    $('#rmsg').textContent='Выведено на '+mult.toFixed(2)+'x: '+(pr>=0?'+':'')+fmt(pr);
@@ -579,12 +584,13 @@ async function pollCloudRocket(){
   if(!Number.isFinite(serverMult)||serverMult<1||serverMult>1000)throw new Error('Сервер вернул некорректный множитель');
   if(state.balance!==undefined&&Number.isFinite(Number(state.balance))){bal=Number(state.balance);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal)}
   const wasStale=R.syncStale;
+  R.serverT=Math.log(serverMult)/.15;R.serverSyncMono=performance.now();
   R.lastServerSync=Date.now();R.syncStale=false;R.pollDelay=1000;
   if(status==='lost'||status==='round_over'){
-   R.crash=serverMult;R.m=serverMult;R.t=Math.log(serverMult)/.15;R.cashed=status==='round_over'||R.cashed;rcrash();return;
+   R.crash=serverMult;R.m=serverMult;R.t=R.serverT;R.cashed=status==='round_over'||R.cashed;rcrash();return;
   }
   if(status==='running'||status==='cashed_running'){
-   R.m=serverMult;R.t=Math.log(serverMult)/.15;
+   R.m=serverMult;R.t=R.serverT;
    if(status==='cashed_running'){
     R.cashed=true;R.payout=Number(state.payout)||R.payout||0;$('#rgo').disabled=true;$('#rgo').textContent='Выигрыш зафиксирован · ждём конец раунда';
    }else if(!R.cashed){$('#rgo').disabled=false;$('#rgo').textContent='ЗАБРАТЬ '+fmt(R.bet*serverMult)+' 🍬'}
@@ -600,14 +606,14 @@ async function pollCloudRocket(){
 }
 function resumeCloudRocket(active){
  if(!active?.round_id||R.on)return;
- Object.assign(R,{on:true,bet:Number(active.bet),cashed:false,m:1,t:0,crash:1000,auto:0,t0:performance.now(),serverRoundId:active.round_id,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
+ Object.assign(R,{on:true,bet:Number(active.bet),cashed:false,m:1,t:0,serverT:0,serverSyncMono:performance.now(),crash:1000,auto:0,t0:performance.now(),serverRoundId:active.round_id,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Проверяем состояние активного раунда на сервере…';
  $('#rgo').classList.add('pulse');$('#rgo').disabled=false;$('#rgo').textContent='ПРОВЕРКА СЕРВЕРНОГО РАУНДА…';
  startRocketLoop();pollCloudRocket();
 }
 function rcrash(){
  if(R.settled)return;R.settled=true;R.on=false;R.serverRoundId=null;if(R.rafId){cancelAnimationFrame(R.rafId);R.rafId=0;}
- R.m=Math.max(1,Math.min(1000,Number(R.crash)||1));R.crash=R.m;
+ R.m=Math.max(1,Math.min(1000,Number(R.crash)||1));R.crash=R.m;R.t=Math.log(R.crash)/.15;R.serverT=R.t;R.serverSyncMono=performance.now();
  if(!R.cashed){ACC.pendingRocket=null;recordAction('rocket','Ракета упала',0);addXP(3);save()}else ACC.pendingRocket=null;
  botEnd();$('#mult').textContent=R.crash.toFixed(2)+'x';$('#mult').classList.add('dead');draw(R.t,R.m,true);
  const st=$('#stage');st.classList.remove('boom');void st.offsetWidth;st.classList.add('boom');noise(.6,.3);tone(300,.6,'sawtooth',.15,0,40);
@@ -624,7 +630,7 @@ $('#rgo').onclick=async()=>{
  if(authUser){try{const result=await cloudRpc('fantik_rocket_start',{p_bet:b});serverRoundId=result.round_id;startedAt=Date.parse(result.started_at)||Date.now();startingBalance=Number(result.balance)}catch(e){toast('Не удалось начать раунд: '+e.message);return}}
  else setBal(-b);
  const elapsed=Math.max(0,(Date.now()-startedAt)/1000);
- Object.assign(R,{on:true,bet:b,cashed:false,m:1,t:0,crash,auto:+$('#rauto').value||0,t0:performance.now()-elapsed*1000,serverRoundId,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
+ Object.assign(R,{on:true,bet:b,cashed:false,m:1,t:elapsed,serverT:elapsed,serverSyncMono:performance.now(),crash,auto:+$('#rauto').value||0,t0:performance.now()-elapsed*1000,serverRoundId,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
  if(authUser){bal=startingBalance;$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingRocket=null}else ACC.pendingRocket={bet:b,crash:R.crash,auto:R.auto,startedAt:Date.now()};
  ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;save();
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Ставка '+fmt(b)+' 🍬 — взлетаем!';$('#rgo').classList.add('pulse');
