@@ -196,8 +196,12 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
 /* Admin panel and fixed full-height activity rail */
 #feed .feed-head{flex:none}
 #feedList{overflow:hidden!important;max-height:none!important}
-#feed .fe{padding:6px;gap:6px;min-height:46px}
-#feed .feed-img{width:32px;height:32px}
+#feedList{gap:5px;align-content:start;grid-auto-rows:min-content}
+#feed .fe{padding:4px;gap:5px;min-height:40px;grid-template-columns:28px minmax(0,1fr)}
+#feed .feed-img{width:28px;height:28px}
+#feed .feed-copy{gap:1px}
+#feed .feed-copy b{font-size:10px;line-height:1.1;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+#feed .feed-copy small{font-size:9px;line-height:1.1;white-space:nowrap;text-overflow:ellipsis}
 .admin-title{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin:5px 0 14px}
 .admin-title h2{margin:0 0 5px}
 .admin-secure{font-size:10px;letter-spacing:.12em;font-weight:900;color:#8fffc2;border:1px solid #2c9b68;border-radius:30px;padding:7px 10px;white-space:nowrap;background:#0d3828}
@@ -229,6 +233,23 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
 .admin-footnote{font-size:11px;color:var(--mut);margin:12px 0}
 @media(max-width:760px){.admin-grid{grid-template-columns:1fr}.admin-title{flex-direction:column}.admin-secure{align-self:flex-start}}
 @media(max-width:420px){.admin-form-grid{grid-template-columns:1fr}.admin-span{grid-column:auto}.admin-item-picker{grid-template-columns:1fr}.admin-item-row{grid-template-columns:20px 24px minmax(0,1fr) 58px}}
+.cloud-save-card{display:flex;align-items:center;gap:12px;margin-top:14px;padding:13px 15px;border:1px solid #3b8f6a;border-radius:15px;background:linear-gradient(120deg,#102b2a,#112039);box-shadow:0 8px 20px #0003;min-width:0}
+.cloud-save-icon{width:42px;height:42px;display:grid;place-items:center;flex:none;border-radius:13px;background:#16483c;font-size:23px}
+.cloud-save-copy{display:grid;gap:3px;min-width:0;flex:1}
+.cloud-save-copy b{font-size:13px;color:#b9ffdc}
+.cloud-save-copy span{font-size:12px;color:#e7e4f5;line-height:1.35}
+.cloud-save-copy small{font-size:10px;color:#a99fc9;line-height:1.35}
+.cloud-save-check{font-size:14px;color:#72e6a8;flex:none}
+.cloud-save-card[data-state="syncing"]{border-color:#9c7b36;background:linear-gradient(120deg,#332812,#20183a)}
+.cloud-save-card[data-state="syncing"] .cloud-save-icon{background:#5b4218}
+.cloud-save-card[data-state="syncing"] .cloud-save-copy b,.cloud-save-card[data-state="syncing"] .cloud-save-check{color:#ffdc82}
+.cloud-save-card[data-state="error"]{border-color:#a34b5b;background:linear-gradient(120deg,#35151f,#20122f)}
+.cloud-save-card[data-state="error"] .cloud-save-icon{background:#642333}
+.cloud-save-card[data-state="error"] .cloud-save-copy b,.cloud-save-card[data-state="error"] .cloud-save-check{color:#ff9cae}
+.cloud-save-card[data-state="offline"],.cloud-save-card[data-state="idle"]{border-color:#594a7d;background:linear-gradient(120deg,#20183a,#17122e)}
+.cloud-save-card[data-state="offline"] .cloud-save-icon,.cloud-save-card[data-state="idle"] .cloud-save-icon{background:#362858}
+.cloud-save-card[data-state="offline"] .cloud-save-copy b,.cloud-save-card[data-state="idle"] .cloud-save-copy b,.cloud-save-card[data-state="offline"] .cloud-save-check,.cloud-save-card[data-state="idle"] .cloud-save-check{color:#c5b6f3}
+@media(max-width:480px){.cloud-save-card{align-items:flex-start;padding:11px}.cloud-save-icon{width:36px;height:36px}.cloud-save-check{padding-top:3px}}
 
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -239,8 +260,8 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
 <div class="bal">🍬 <span id="bal">5 000</span><small id="balRub">≈ 500,00 ₽</small></div>
 <button id="pbtn">🎁 Промокод</button><button id="gran">👵 подарок +10 000</button><button id="me"></button></header>
 <div id="eventbar" hidden><div><b id="eventTitle">🎉 Событие</b><small id="eventDesc"></small></div><div class="event-clock"><span id="eventTimer"></span><button id="eventClaim" disabled>Забрать</button></div></div>
-<nav><button class="tab on" data-t="rocket">🚀 Ракета</button><button class="tab" data-t="double">🎲 Дабл</button><button class="tab" data-t="cases">📦 Кейсы</button><button class="tab" data-t="up">⬆️ Развитие</button><button class="tab" data-t="inv">🎒 Склад</button><button class="tab" data-t="shop">🛍️ Магазин</button><button class="tab" data-t="profile">👤 Профиль</button><button class="tab" data-t="about">ℹ️ О проекте</button><button class="tab" id="adminTab" data-t="admin" hidden>👑 Админка</button><button id="mute">🔊</button></nav>
-<aside id="feed" aria-label="Демонстрационная лента активности"><div class="feed-head"><b>ОТКРЫТИЯ ИГРОКОВ</b><span>ДЕМО-ЛЕНТА</span></div><div id="feedList"></div></aside>
+<nav><button class="tab on" data-t="rocket">🚀 Ракета</button><button class="tab" data-t="double">🎲 Дабл</button><button class="tab" data-t="cases">📦 Кейсы</button><button class="tab" data-t="up">⬆️ Развитие</button><button class="tab" data-t="inv">🎒 Склад</button><button class="tab" data-t="shop">🛍️ Магазин</button><button class="tab" data-t="profile">👤 Профиль</button><button class="tab" id="adminTab" data-t="admin" title="Доступно только подтверждённому администратору Supabase" hidden>👑 Админ-панель</button><button class="tab" data-t="about">ℹ️ О проекте</button><button id="mute">🔊</button></nav>
+<aside id="feed" aria-label="Лента активности игроков"><div class="feed-head"><b>ОТКРЫТИЯ ИГРОКОВ</b></div><div id="feedList"></div></aside>
 <main>
 <section id="rocket">
  <div class="stage" id="stage"><canvas id="rc"></canvas><div id="mult">1.00x</div><div id="rmsg">Поставь фантики и взлетай!</div></div>
@@ -305,7 +326,7 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
  <div id="shopPreview" class="shop-preview" hidden></div>
 </section>
 <section id="profile" hidden>
- <h2>Твой профиль</h2><div id="profileCard" class="profile-card"></div><div class="profile-stats" id="profileStats"></div><div class="profile-lower"><div><h3>Достижения</h3><div id="achievementList" class="achievement-list"></div></div><div><h3>Коллекция конфет</h3><div id="collectionInfo" class="collection-info"></div><div id="collectionGrid" class="grid sc collection-grid"></div></div></div><div class="profile-settings"><h3>Настройки</h3><button id="fxToggle">✨ Эффекты: полные</button><label class="sound-setting">🔊 Громкость эффектов <input id="soundVolume" type="range" min="0" max="100" value="70"></label><label class="sound-setting"><input id="quickOpen" type="checkbox"> Быстрое открытие кейсов</label><button id="exportSave">⬇️ Скачать резервную копию</button><button id="importSave">⬆️ Восстановить из файла</button><input id="importFile" type="file" accept="application/json" hidden></div><p id="saveStatus" class="mut" role="status">Локальная копия хранится в браузере; основной профиль синхронизируется с облаком Supabase.</p>
+ <h2>Твой профиль</h2><div id="profileCard" class="profile-card"></div><div class="profile-stats" id="profileStats"></div><div class="profile-lower"><div><h3>Достижения</h3><div id="achievementList" class="achievement-list"></div></div><div><h3>Коллекция конфет</h3><div id="collectionInfo" class="collection-info"></div><div id="collectionGrid" class="grid sc collection-grid"></div></div></div><div class="profile-settings"><h3>Настройки</h3><button id="fxToggle">✨ Эффекты: полные</button><label class="sound-setting">🔊 Громкость эффектов <input id="soundVolume" type="range" min="0" max="100" value="70"></label><label class="sound-setting"><input id="quickOpen" type="checkbox"> Быстрое открытие кейсов</label></div><div id="cloudSaveCard" class="cloud-save-card" data-state="idle" role="status" aria-live="polite"><span class="cloud-save-icon">☁️</span><div class="cloud-save-copy"><b id="cloudSaveTitle">Облачное сохранение</b><span id="saveStatus">Проверяем подключение к Supabase…</span><small id="cloudSaveTime">Прогресс автоматически сохраняется в облако.</small></div><span class="cloud-save-check" aria-hidden="true">●</span></div>
 </section>
 <section id="admin" hidden>
  <div class="admin-title"><div><h2>👑 Панель администратора</h2><p class="mut">Управление промокодами и каталогом кейсов. Все изменения проверяются сервером.</p></div><span class="admin-secure">ЗАЩИЩЁННЫЙ ДОСТУП</span></div>
@@ -663,7 +684,10 @@ const BN=['PixelPilot','Северный_Ветер','K0smos','Лис_в_сет�
 const BA=['🧑','👩','👴','🧔','👧','🤠','😎','🥷','🧙','🤖'];
 let ON=1100+Math.floor(rnd()*900),RB=[],RE=0,DB=[],DE=0;
 const feedEl=$('#feedList');
-function feed(t,p,candy=null){const d=document.createElement('div');d.className='fe t'+tier(p);if(candy){d.innerHTML=`<img class='feed-img' loading='lazy' src='${candyArt(candy)}' alt=''><div class='feed-copy'><b>${t}</b><small>${candy.n} · 🍬 ${fmt(candy.p)} · ДЕМО</small></div>`}else d.innerHTML=`<span class='feed-img' aria-hidden='true'>🎲</span><div class='feed-copy'><b>${t}</b><small>ДЕМО · виртуальный раунд</small></div>`;feedEl.prepend(d);while(feedEl.children.length>9)feedEl.lastChild.remove()}
+function feedLimit(){return Math.max(8,Math.min(26,Math.floor((window.innerHeight-50)/45)))}
+function trimFeed(){while(feedEl.children.length>feedLimit())feedEl.lastChild?.remove()}
+addEventListener('resize',trimFeed);
+function feed(t,p,candy=null){const d=document.createElement('div');d.className='fe t'+tier(p);if(candy){d.innerHTML=`<img class='feed-img' loading='lazy' src='${candyArt(candy)}' alt=''><div class='feed-copy'><b>${t}</b><small>${candy.n} · 🍬 ${fmt(candy.p)}</small></div>`}else d.innerHTML=`<span class='feed-img' aria-hidden='true'>🎲</span><div class='feed-copy'><b>${t}</b><small>Виртуальный игровой раунд</small></div>`;feedEl.prepend(d);trimFeed()}
 function botEvt(){const n=pick(BN),a=pick(BA),x=rnd();let t,p;
  if(x<.6){const k=pick(CS),c=roll(k);t=`${a} ${n} открыл «${k.n}»`;p=c.p;feed(t,p,c);setTimeout(botEvt,2500+rnd()*3500);return}
  else if(x<.75){const c=pick(CD.filter(c=>c.p>1500));t=`${a} ${n} апгрейднул конфету`;p=c.p;feed(t,p,c);setTimeout(botEvt,2500+rnd()*3500);return}
@@ -694,7 +718,16 @@ const SUPABASE_URL = 'https://vftiyvrwvqujqlbthsuj.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_SN0vQ0lHB9IjIa0Qi0BomA_GLw_xyGt';
 let sb=null, authUser=null, cloudSyncTimer=0, cloudSyncBusy=false, cloudSyncAgain=false, cloudErrorShown=false;
 const cloudConfigured = () => /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL) && /^(sb_publishable_|eyJ)/.test(SUPABASE_PUBLISHABLE_KEY);
-function cloudStatus(message){const st=$('#saveStatus');if(st)st.textContent=message;}
+function cloudStatus(message){
+ const st=$('#saveStatus'),card=$('#cloudSaveCard'),title=$('#cloudSaveTitle'),time=$('#cloudSaveTime');
+ const msg=String(message||'');
+ if(!authUser){if(card)card.dataset.state='offline';if(title)title.textContent='Облачный аккаунт не подключён';if(st)st.textContent='Войди в аккаунт, чтобы пользоваться облачным сохранением.';if(time)time.textContent='Локальная копия остаётся в этом браузере.';return;}
+ const failed=/не удалось|ошибка|недоступно|⚠️/i.test(msg),saved=/синхронизировано с облаком/i.test(msg),syncing=!failed&&!saved;
+ if(card)card.dataset.state=failed?'error':saved?'saved':'syncing';
+ if(title)title.textContent=failed?'Ошибка облачной синхронизации':saved?'Всё сохранено в облаке':'Синхронизируем изменения…';
+ if(st)st.textContent=failed?msg.replace(/^⚠️?\s*/,''):(saved?'Прогресс доступен на всех устройствах.':'Отправляем последние изменения в Supabase…');
+ if(time){const match=msg.match(/·\s*(.+)$/);time.textContent=failed?'Проверь подключение и повтори действие.':saved?'Последняя синхронизация: '+(match?match[1]:new Date().toLocaleTimeString('ru-RU')):'Пожалуйста, не закрывай страницу до завершения синхронизации.';}
+}
 async function getEconomyState(){
  const {data,error}=await sb.rpc('fantik_get_economy_state');
  if(error)throw new Error(error.message);
@@ -917,8 +950,8 @@ function renderAccountUpgrades(){if(!ME)return;const el=$('#accountUpgrades');el
 $('#accountUpgrades').onclick=async e=>{const id=e.target.closest('[data-au]')?.dataset.au,x=ACCOUNT_UPGRADES.find(v=>v.id===id);if(!x)return;const l=upgradeLevel(id);if(l>=5)return;const cost=x.costs[l];if(authUser){try{const result=await cloudRpc('fantik_buy_upgrade',{p_upgrade_id:id});bal=Number(result.balance);ACC.upgrades[id]=Number(result.level);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);recordAction('account-upgrade',x.name+' · уровень '+result.level,Number(result.cost));addXP(30+10*l);renderAccountUpgrades();uCalc();save();toast('Апгрейд аккаунта улучшен');return}catch(err){toast('Не удалось купить улучшение: '+err.message);return}}if(bal<cost){toast('Не хватает фантиков для улучшения');return}setBal(-cost);ACC.upgrades[id]=l+1;recordAction('account-upgrade',x.name+' · уровень '+(l+1),cost);addXP(30+10*l);renderAccountUpgrades();uCalc();save();toast('Апгрейд аккаунта улучшен')};
 $('#soundVolume').oninput=e=>{ACC.settings.volume=+e.target.value;save()};$('#quickOpen').onchange=e=>{ACC.settings.quickOpen=e.target.checked;save();toast(e.target.checked?'Быстрое открытие включено':'Обычная анимация включена')};
 $('#fxToggle').onclick=()=>{ACC.settings.lowFx=!ACC.settings.lowFx;document.body.classList.toggle('low-fx',ACC.settings.lowFx);renderProfile();save()};
-$('#exportSave').onclick=()=>{if(!ME)return;save();const data=JSON.stringify(ACC,null,2),blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='fantik-kazino-'+ME.n.replace(/[^\wа-яё-]+/gi,'_')+'-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Резервная копия подготовлена')};
-$('#importSave').onclick=()=>{if(authUser){toast('Импорт JSON отключён для облачного аккаунта: экономика хранится на сервере.');return}$('#importFile').click()};$('#importFile').onchange=e=>{const file=e.target.files?.[0];if(!file||!ME)return;const reader=new FileReader();reader.onload=()=>{try{const obj=JSON.parse(reader.result);if(!obj||typeof obj!=='object')throw new Error('Неверный формат');if(!confirm('Заменить текущий прогресс данными из резервной копии?'))return;ACC=normalizeAccount(obj,ME.n,ME.a);bal=ACC.balance;uid=0;INV=ACC.inventory.map(v=>{const c=CD.find(x=>x.id===v.id);return c?{u:v.uid||++uid,c}:null}).filter(Boolean);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);rInv();rUp();save();renderProfile();renderAccountUpgrades();toast('Резервная копия восстановлена')}catch(err){toast('Не удалось импортировать файл: '+err.message)}};reader.readAsText(file);e.target.value=''};
+// Profile export/import controls were removed: cloud accounts synchronize automatically through Supabase.
+
 
 /* ===== промокоды: единая конфигурация и миграция старого кода ===== */
 const PR={
