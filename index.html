@@ -187,7 +187,9 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
   #cgrid .cs>span:last-child{font-size:12px;}
 }
 
-</style></head>
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
 <body>
 <header><div class="logo">🎰 ФАНТИК<b>-КАЗИНО</b></div>
 <div class="onl">🟢 активность · демо: <b id="onl">1 247</b></div>
@@ -260,14 +262,14 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
  <div id="shopPreview" class="shop-preview" hidden></div>
 </section>
 <section id="profile" hidden>
- <h2>Твой профиль</h2><div id="profileCard" class="profile-card"></div><div class="profile-stats" id="profileStats"></div><div class="profile-lower"><div><h3>Достижения</h3><div id="achievementList" class="achievement-list"></div></div><div><h3>Коллекция конфет</h3><div id="collectionInfo" class="collection-info"></div><div id="collectionGrid" class="grid sc collection-grid"></div></div></div><div class="profile-settings"><h3>Настройки</h3><button id="fxToggle">✨ Эффекты: полные</button><label class="sound-setting">🔊 Громкость эффектов <input id="soundVolume" type="range" min="0" max="100" value="70"></label><label class="sound-setting"><input id="quickOpen" type="checkbox"> Быстрое открытие кейсов</label><button id="exportSave">⬇️ Скачать резервную копию</button><button id="importSave">⬆️ Восстановить из файла</button><input id="importFile" type="file" accept="application/json" hidden></div><p id="saveStatus" class="mut" role="status">Сохранения хранятся в этом браузере.</p>
+ <h2>Твой профиль</h2><div id="profileCard" class="profile-card"></div><div class="profile-stats" id="profileStats"></div><div class="profile-lower"><div><h3>Достижения</h3><div id="achievementList" class="achievement-list"></div></div><div><h3>Коллекция конфет</h3><div id="collectionInfo" class="collection-info"></div><div id="collectionGrid" class="grid sc collection-grid"></div></div></div><div class="profile-settings"><h3>Настройки</h3><button id="fxToggle">✨ Эффекты: полные</button><label class="sound-setting">🔊 Громкость эффектов <input id="soundVolume" type="range" min="0" max="100" value="70"></label><label class="sound-setting"><input id="quickOpen" type="checkbox"> Быстрое открытие кейсов</label><button id="exportSave">⬇️ Скачать резервную копию</button><button id="importSave">⬆️ Восстановить из файла</button><input id="importFile" type="file" accept="application/json" hidden></div><p id="saveStatus" class="mut" role="status">Локальная копия хранится в браузере; основной профиль синхронизируется с облаком Supabase.</p>
 </section>
 <section id="about" hidden>
  <h2>О проекте</h2><div class="about-card"><p>ФАНТИК-КАЗИНО — шуточная игра с виртуальной валютой, коллекциями и косметическим прогрессом. Фантики нельзя купить или вывести.</p><h3>Наши партнёры и инвесторы</h3><p class="mut">Это вымышленные роли внутри игрового мира, не реальные деловые отношения и не официальная поддержка.</p><div class="partner-grid"><article><b>Valve</b><span>Поставщик воображаемых коробок и бесконечного «ещё одного открытия».</span><small>Главный консультант по лутбоксам (шутка)</small></article><article><b>Musor Drop</b><span>Отвечает за переработку неудачных выпадений в легенды.</span><small>Директор мусорной логистики</small></article><article><b>Rockstar Games</b><span>Выдала игре лицензию на драматичные подъёмы и падения ракеты — исключительно в фантазии.</span><small>Почётный сценарист хаоса</small></article><article><b>Litvin</b><span>Главный по громким появлениям, внезапным событиям и фантиковому шоу.</span><small>Амбассадор эффектных входов</small></article></div></div>
 </section>
 </main>
-<footer>Это шуточная игра: фантики — только виртуальная валюта. Для удобства показан условный курс 10 фантиков = 1 ₽; это не реальные деньги, купить или вывести их нельзя. Аккаунт и прогресс сохраняются локально в этом браузере.<br>Настоящая синхронизация между устройствами требует серверного аккаунта.</footer>
-<div id="login"><div class="lcard"><div class="logo">🎰 ФАНТИК<b>-КАЗИНО</b></div><p class="mut">Вход в аккаунт</p><label>Твой ник<input id="nick" maxlength="16" placeholder="например, Конфетный_Король" autocomplete="off"></label><div class="avs" id="avs"></div><p id="lerr" class="mut"></p><button id="lgo" class="big">ВОЙТИ 🍬</button><p class="mut">Пароль не нужен. Прогресс сохраняется в этом браузере по нику; экспортируй резервную копию в профиле, чтобы перенести её вручную.</p></div></div>
+<footer>Это шуточная игра: фантики — только виртуальная валюта. Для удобства показан условный курс 10 фантиков = 1 ₽; это не реальные деньги, купить или вывести их нельзя. Прогресс синхронизируется с облачным аккаунтом; локальная копия используется как резервная.<br>Настоящая синхронизация между устройствами требует серверного аккаунта.</footer>
+<div id="login"><div class="lcard"><div class="logo">🎰 ФАНТИК<b>-КАЗИНО</b></div><p class="mut">Облачный аккаунт · вход с любого устройства</p><label>Твой игровой ник<input id="nick" maxlength="16" placeholder="например, Player123" autocomplete="nickname"></label><div class="avs" id="avs"></div><label>Email<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label><label>Пароль<input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Минимум 8 символов"></label><p id="lerr" class="mut" role="status">Создай аккаунт или войди. Прогресс будет привязан к уникальному ID, а не только к нику.</p><button id="lgo" class="big">ВОЙТИ 🍬</button><button id="registerBtn" type="button">СОЗДАТЬ АККАУНТ</button><p class="mut">При первой регистрации локальный прогресс с таким же ником будет перенесён в облако, если он есть в этом браузере.</p></div></div>
 <div id="promo" hidden><div class="lcard"><b>🎁 Промокод от авторов</b><input id="pin" placeholder="Введи код" autocomplete="off" autocapitalize="characters"><button id="pgo" class="big">АКТИВИРОВАТЬ</button><p id="pmsg" class="mut"></p><button id="pclose">Закрыть</button></div></div>
 <div id="toast"></div>
 <div id="mega"><div class="rays"></div><div class="orb"></div><i class="ring"></i><i class="ring b"></i><i class="ring c"></i><div class="shine"></div><div class="frame"></div><canvas id="mfx"></canvas><div class="in"><div id="mtxt"></div><div id="msub"></div><div id="mamt"><span id="mnum"></span><span class="cu">🍬</span></div><button id="mclose">ЗАБРАТЬ 🍬</button></div></div>
@@ -555,6 +557,89 @@ addEventListener('keydown',e=>{if(e.code=='Space'&&$('#login').hidden&&!['INPUT'
 /* ===== аккаунты, бабушка с кулдауном, промокоды ===== */
 let ME=null,ACC={gran:0,promos:[]},saveTimer=0,saveRecovered=false,saveErrorShown=false;
 const GR=300000, SAVE_VERSION=3, KEY=n=>'fc_acc_'+String(n).trim().toLowerCase(),ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}}};
+// Supabase client configuration. Fill these two values after creating your Supabase project.
+const SUPABASE_URL = 'https://vftiyvrwvqujqlbthsuj.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_SN0vQ0lHB9IjIa0Qi0BomA_GLw_xyGt';
+let sb=null, authUser=null, cloudSyncTimer=0, cloudSyncBusy=false, cloudSyncAgain=false, cloudErrorShown=false;
+const cloudConfigured = () => /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL) && /^(sb_publishable_|eyJ)/.test(SUPABASE_PUBLISHABLE_KEY);
+function cloudStatus(message){const st=$('#saveStatus');if(st)st.textContent=message;}
+function scheduleCloudSave(){if(!sb||!authUser||!ACC)return;clearTimeout(cloudSyncTimer);cloudSyncTimer=setTimeout(syncCloudSave,900);}
+async function syncCloudSave(){
+ if(!sb||!authUser||!ACC)return;
+ if(cloudSyncBusy){cloudSyncAgain=true;return;}
+ cloudSyncBusy=true;
+ const snapshot=JSON.parse(JSON.stringify(ACC));
+ let error=null;
+ try{const result=await sb.from('player_saves').upsert({user_id:authUser.id,game_data:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});error=result.error||null;}
+ catch(e){error=e;}
+ cloudSyncBusy=false;
+ if(error){cloudStatus('⚠️ Не удалось синхронизировать: '+error.message);if(!cloudErrorShown){toast('Облачное сохранение не удалось. Проверь SQL и политики Supabase.');cloudErrorShown=true;}}
+ else{cloudErrorShown=false;cloudStatus('☁️ Синхронизировано с облаком · '+new Date().toLocaleTimeString('ru-RU'));}
+ if(cloudSyncAgain){cloudSyncAgain=false;scheduleCloudSave();}
+}
+function friendlyAuthError(message){
+ const m=String(message||'').toLowerCase();
+ if(m.includes('profiles_username_lower_uidx')||m.includes('duplicate key')||m.includes('unique constraint'))return 'Этот игровой ник уже занят. Выбери другой.';
+ if(m.includes('invalid login credentials'))return 'Неверный email или пароль.';
+ if(m.includes('email not confirmed'))return 'Подтверди email по ссылке из письма, затем войди.';
+ if(m.includes('password should be at least'))return 'Пароль должен содержать не менее 8 символов.';
+ if(m.includes('user already registered'))return 'Этот email уже зарегистрирован. Попробуй войти.';
+ if(m.includes('fetch'))return 'Не удалось связаться с Supabase. Проверь URL и подключение.';
+ return message||'Неизвестная ошибка авторизации.';
+}
+async function completeCloudLogin(user){
+ if(!sb||!user)throw new Error('Не найден аккаунт Supabase.');
+ const {data:profile,error:profileError}=await sb.from('profiles').select('username,avatar').eq('id',user.id).single();
+ if(profileError)throw new Error('Не удалось загрузить профиль: '+profileError.message+' — проверь, что SQL-скрипт выполнен.');
+ const {data:cloudSave,error:saveError}=await sb.from('player_saves').select('game_data').eq('user_id',user.id).maybeSingle();
+ if(saveError)throw new Error('Не удалось загрузить облачное сохранение: '+saveError.message+' — проверь таблицу player_saves.');
+ const n=profile.username, a=profile.avatar||'🧑';
+ const local=readAccount(n);
+ const initial=cloudSave?.game_data || local.account || {};
+ authUser=user;
+ login(n,a,user,initial);
+ if(!cloudSave?.game_data && local.account){toast('Локальный прогресс перенесён в облачный аккаунт.');}
+ else if(!cloudSave?.game_data){toast('Облачный аккаунт создан. Добро пожаловать!');}
+}
+async function initializeCloudAuth(){
+ if(!cloudConfigured()){
+   $('#lerr').textContent='Онлайн-вход ещё не настроен. Сначала создай проект Supabase, выполни supabase_setup.sql и вставь URL + Publishable key в начало настроек этого HTML.';
+   return;
+ }
+ if(!window.supabase?.createClient){$('#lerr').textContent='Не загрузилась библиотека Supabase. Обнови страницу или проверь подключение к CDN.';return;}
+ sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+ const {data,error}=await sb.auth.getSession();
+ if(error){$('#lerr').textContent='Ошибка проверки сессии: '+friendlyAuthError(error.message);return;}
+ if(data.session?.user){try{await completeCloudLogin(data.session.user);}catch(e){$('#lerr').textContent=friendlyAuthError(e.message);}}
+ sb.auth.onAuthStateChange((event,session)=>{
+   if(event==='SIGNED_OUT' && !session){authUser=null;location.reload();}
+ });
+}
+async function registerCloudAccount(){
+ ac();const n=$('#nick').value.trim(),email=$('#authEmail').value.trim().toLowerCase(),password=$('#authPassword').value,e=$('#lerr');
+ if(!cloudConfigured()||!sb){e.textContent='Сначала настрой Supabase: URL и Publishable key ещё не указаны в HTML.';return;}
+ if(!/^[\w\u0400-\u04ff .-]{2,16}$/.test(n)){e.textContent='Ник: 2–16 символов — буквы, цифры, пробел, _ - .';return;}
+ if(BN.some(b=>b.toLowerCase()===n.toLowerCase())){e.textContent='Этот ник занят одним из игроков 😅';return;}
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){e.textContent='Введи корректный email.';return;}
+ if(password.length<8){e.textContent='Пароль должен содержать не менее 8 символов.';return;}
+ $('#registerBtn').disabled=true;e.textContent='Создаём аккаунт…';
+ const {data,error}=await sb.auth.signUp({email,password,options:{data:{username:n,avatar:AV},emailRedirectTo:location.origin+location.pathname}});
+ $('#registerBtn').disabled=false;
+ if(error){e.textContent=friendlyAuthError(error.message);return;}
+ if(data.session?.user){try{await completeCloudLogin(data.session.user);}catch(err){e.textContent=friendlyAuthError(err.message);}}
+ else{e.textContent='Аккаунт создан! Подтверди email по ссылке из письма, затем вернись на сайт и нажми «ВОЙТИ». Проверь также папку «Спам».';}
+}
+async function signInCloudAccount(){
+ ac();const email=$('#authEmail').value.trim().toLowerCase(),password=$('#authPassword').value,e=$('#lerr');
+ if(!cloudConfigured()||!sb){e.textContent='Сначала настрой Supabase: URL и Publishable key ещё не указаны в HTML.';return;}
+ if(!email||!password){e.textContent='Введи email и пароль.';return;}
+ $('#lgo').disabled=true;e.textContent='Выполняем вход…';
+ const {data,error}=await sb.auth.signInWithPassword({email,password});
+ $('#lgo').disabled=false;
+ if(error){e.textContent=friendlyAuthError(error.message);return;}
+ try{await completeCloudLogin(data.user);}catch(err){e.textContent=friendlyAuthError(err.message);await sb.auth.signOut();}
+}
+
 const emptyStats=()=>({rocketRounds:0,rocketWins:0,doubleRounds:0,doubleWins:0,casesOpened:0,upgradesWon:0,upgradesLost:0,itemsSold:0});
 function normalizeAccount(raw,n,a){const src=raw&&typeof raw==='object'?raw:{},acc={...src};acc.version=SAVE_VERSION;acc.profile={...(src.profile||{}),n,a};acc.balance=Math.max(0,Math.floor(Number(src.balance??src.bal??1200)||0));acc.bal=acc.balance;
  let items=Array.isArray(src.inventory)?src.inventory.map((v,i)=>{const c=CD.find(x=>x.id===v?.id||x.n===v?.name||x.id===v);return c?{id:c.id,uid:Number(v?.uid)||i+1}:null}).filter(Boolean):Array.isArray(src.inv)?src.inv.map((i,index)=>{const c=CD[Number(i)];return c?{id:c.id,uid:index+1}:null}).filter(Boolean):[];
@@ -565,8 +650,27 @@ function normalizeAccount(raw,n,a){const src=raw&&typeof raw==='object'?raw:{},a
  acc.pendingReward=src.pendingReward||null;acc.pendingDouble=src.pendingDouble||null;acc.stagedDouble=src.stagedDouble||null;acc.pendingRocket=src.pendingRocket||null;acc.grandmaEvent=src.grandmaEvent||null;acc.timedEvent=src.timedEvent||null;return acc}
 function readAccount(n){const key=KEY(n);let main=ls.get(key),backup=ls.get(key+'.bak'),parsed=null,recovered=false;if(main){try{parsed=JSON.parse(main)}catch(e){parsed=null}}if(!parsed&&backup){try{parsed=JSON.parse(backup);recovered=true}catch(e){parsed=null}}return{account:parsed,recovered,exists:!!(main||backup)}}
 function queueSave(){if(!ME)return;clearTimeout(saveTimer);saveTimer=setTimeout(()=>save(),140)}
-function save(){if(!ME||!ACC)return true;clearTimeout(saveTimer);ACC.version=SAVE_VERSION;ACC.profile={n:ME.n,a:ME.a};ACC.balance=Math.max(0,Math.floor(bal));ACC.bal=ACC.balance;ACC.inventory=INV.map(o=>({id:o.c.id,uid:o.u}));ACC.inv=INV.map(o=>CD.findIndex(c=>c.id===o.c.id)).filter(i=>i>=0);ACC.updatedAt=Date.now();
- const key=KEY(ME.n),payload=JSON.stringify(ACC);try{const old=localStorage.getItem(key);if(saveRecovered){localStorage.setItem(key+'.bak',payload);saveRecovered=false}else if(old&&old!==payload){try{localStorage.setItem(key+'.bak',old)}catch(e){}}localStorage.setItem(key,payload);localStorage.setItem('fc_last',ME.n);localStorage.setItem('fc_av',ME.a);saveErrorShown=false;const st=$('#saveStatus');if(st)st.textContent='Сохранено локально · '+new Date().toLocaleTimeString('ru-RU');return true}catch(e){try{localStorage.removeItem(key+'.bak');localStorage.setItem(key,payload);localStorage.setItem('fc_last',ME.n);localStorage.setItem('fc_av',ME.a);return true}catch(err){if(!saveErrorShown){toast('⚠️ Не удалось записать сохранение. Освободи место в браузере и экспортируй резервную копию.');saveErrorShown=true}const st=$('#saveStatus');if(st)st.textContent='Ошибка сохранения: '+(err?.message||'хранилище недоступно');return false}}}
+function save(){
+ if(!ME||!ACC)return true;
+ clearTimeout(saveTimer);
+ ACC.version=SAVE_VERSION;ACC.profile={n:ME.n,a:ME.a};ACC.balance=Math.max(0,Math.floor(bal));ACC.bal=ACC.balance;
+ ACC.inventory=INV.map(o=>({id:o.c.id,uid:o.u}));ACC.inv=INV.map(o=>CD.findIndex(c=>c.id===o.c.id)).filter(i=>i>=0);ACC.updatedAt=Date.now();
+ const key=KEY(ME.n),payload=JSON.stringify(ACC);
+ try{
+   const old=localStorage.getItem(key);
+   if(saveRecovered){localStorage.setItem(key+'.bak',payload);saveRecovered=false;}
+   else if(old&&old!==payload){try{localStorage.setItem(key+'.bak',old);}catch(e){}}
+   localStorage.setItem(key,payload);localStorage.setItem('fc_last',ME.n);localStorage.setItem('fc_av',ME.a);saveErrorShown=false;
+   cloudStatus(authUser?'Сохранено на устройстве · синхронизация с облаком…':'Сохранено локально · облачный аккаунт не подключён');
+   scheduleCloudSave();
+   return true;
+ }catch(err){
+   scheduleCloudSave();
+   if(!saveErrorShown){toast('⚠️ Не удалось записать локальную копию. Облачная синхронизация будет выполнена, если аккаунт подключён.');saveErrorShown=true;}
+   cloudStatus('Локальное сохранение недоступно: '+(err?.message||'ошибка хранилища'));
+   return false;
+ }
+}
 function recordAction(type,description,amount=0){if(!ACC)return;ACC.history=ACC.history||[];ACC.history.unshift({at:Date.now(),type,description:String(description).slice(0,110),amount:Math.floor(Number(amount)||0)});ACC.history=ACC.history.slice(0,80);checkAchievements();queueSave()}
 function levelInfo(){const xp=Math.max(0,Number(ACC?.xp)||0),level=Math.floor(Math.sqrt(xp/100))+1,base=(level-1)*(level-1)*100,next=level*level*100;return{xp,level,base,next,pct:Math.max(0,Math.min(100,(xp-base)/(next-base)*100))}}
 function updateProgress(){if(!ACC)return;const v=levelInfo();const a=$('#progressInfo'),b=$('#levelBadge'),z=$('#xpZone');if(a)a.textContent=`Уровень ${v.level} · ${fmt(v.xp)} XP · до уровня ${v.level+1}: ${fmt(v.next-v.xp)} XP`;if(b)b.textContent='УРОВЕНЬ '+v.level;if(z)z.style.width=v.pct+'%'}
@@ -583,12 +687,13 @@ function eventTick(){if(!ME)return;ensureTimedState();const now=Date.now(),g=ACC
 function grTick(){if(!ME)return;ensureTimedState();const now=Date.now(),ev=ACC.grandmaEvent,b=$('#gran');if(ev.endsAt&&now<ev.endsAt){const left=ev.endsAt-now;b.disabled=false;b.textContent=`👵 +10 000 · ${Math.floor(left/60000)}:${String(Math.floor(left/1000)%60).padStart(2,'0')}`}else{const left=Math.max(0,ev.nextAt-now);b.disabled=true;b.textContent=`👵 через ${Math.floor(left/60000)}:${String(Math.floor(left/1000)%60).padStart(2,'0')}`}}
 function claimGrandma(){if(!ME)return;ensureTimedState();const ev=ACC.grandmaEvent,now=Date.now();if(!ev.endsAt||now>=ev.endsAt){toast('Подарок бабушки пока недоступен — он появляется случайно и ненадолго');grTick();return}ACC.gran=now;setBal(10000);recordAction('gift','Подарок бабушки',10000);addXP(12);scheduleGrandma();coin();grTick();toast('Бабушка дала 10 000 🍬 и сказала: «не проиграй всё»');save()}
 function claimTimedEvent(){if(!ME)return;const ev=ACC.timedEvent;if(!ev?.active||Date.now()>=ev.endsAt){eventTick();return}if(ev.type==='candy'){const c=pick(CD.filter(x=>x.p>=1200));giveItem(c);toast('🎁 Событие: '+c.n+' отправлена на склад');recordAction('event','Подарок события: '+c.n,c.p);addXP(25)}else{setBal(ev.reward);recordAction('event',ev.title,ev.reward);addXP(18);celebrate(ev.reward,ev.reward);toast('🎉 '+ev.title+': +'+fmt(ev.reward)+' фантиков')}ACC.timedEvent={active:false,nextAt:Date.now()+8*60000+Math.floor(rnd()*9*60000)};save();eventTick()}
-function login(n,a){if(ME)save();const loaded=readAccount(n);ME={n,a};ACC=normalizeAccount(loaded.account||{},n,a);saveRecovered=loaded.recovered;bal=ACC.balance;muted=!!ACC.settings.muted;document.body.classList.toggle('low-fx',!!ACC.settings.lowFx);$('#mute').textContent=muted?'🔇':'🔊';uid=0;INV=ACC.inventory.map(v=>{const c=CD.find(x=>x.id===v.id);uid=Math.max(uid,v.uid||0);return c?{u:v.uid||++uid,c}:null}).filter(Boolean);uid=Math.max(uid,...INV.map(o=>o.u),0);SEL.clear();USEL.clear();$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);$('#me').textContent=a+' '+n;$('#login').hidden=true;ensureTimedState();
+function login(n,a,user=null,initialAccount=null){if(ME)save();const loaded=readAccount(n);ME={n,a,id:user?.id||null,email:user?.email||null};ACC=normalizeAccount(initialAccount||loaded.account||{},n,a);saveRecovered=loaded.recovered;bal=ACC.balance;muted=!!ACC.settings.muted;document.body.classList.toggle('low-fx',!!ACC.settings.lowFx);$('#mute').textContent=muted?'🔇':'🔊';uid=0;INV=ACC.inventory.map(v=>{const c=CD.find(x=>x.id===v.id);uid=Math.max(uid,v.uid||0);return c?{u:v.uid||++uid,c}:null}).filter(Boolean);uid=Math.max(uid,...INV.map(o=>o.u),0);SEL.clear();USEL.clear();$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);$('#me').textContent=a+' '+n;$('#login').hidden=true;ensureTimedState();
  if(ACC.stagedDouble){const refund=Object.values(ACC.stagedDouble).reduce((a,b)=>a+Math.max(0,Number(b)||0),0);bal+=refund;ACC.stagedDouble=null;recordAction('double','Невращённые ставки возвращены после перезагрузки',refund)}if(ACC.pendingReward)awardPendingCase(ACC.pendingReward.id,true);if(ACC.pendingDouble)settlePendingDouble(ACC.pendingDouble);if(ACC.pendingRocket){const pr=ACC.pendingRocket;ACC.pendingRocket=null;if(pr.auto>0&&pr.auto<pr.crash){const payout=Math.floor(pr.bet*pr.auto);bal+=payout;$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.stats.rocketWins=(ACC.stats.rocketWins||0)+1;recordAction('rocket','Автовывод восстановлен после перезагрузки',payout)}else recordAction('rocket','Незавершённый раунд завершён при восстановлении',0);toast('Незавершённый раунд ракеты восстановлен по сохранённому результату');save()}
  grTick();eventTick();rInv();rUp();renderAccountUpgrades();renderProfile();updateProgress();save();if(loaded.recovered)toast('Сохранение восстановлено из резервной копии');else if(loaded.exists&&!loaded.account)toast('⚠️ Старое сохранение повреждено, резервной копии нет. Создан новый профиль.');else toast('Добро пожаловать, '+n+'! 🍬')}
 let AV=ls.get('fc_av')||BA[0];$('#avs').innerHTML=BA.map(a=>`<button data-a='${a}' class='${a==AV?'on':''}'>${a}</button>`).join('');$$('#avs button').forEach(b=>b.onclick=()=>{AV=b.dataset.a;$$('#avs button').forEach(x=>x.classList.toggle('on',x==b))});$('#nick').value=ls.get('fc_last')||'';
-const doLogin=()=>{ac();const n=$('#nick').value.trim(),e=$('#lerr');if(!/^[\w\u0400-\u04ff .-]{2,16}$/.test(n)){e.textContent='Ник: 2–16 символов — буквы, цифры, пробел, _ - .';return}if(BN.some(b=>b.toLowerCase()==n.toLowerCase())){e.textContent='Этот ник занят одним из игроков 😅';return}e.textContent='';login(n,AV)};
-$('#lgo').onclick=doLogin;$('#nick').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin()});$('#me').onclick=()=>{if(R.on||cbusy||ubusy||D.busy){toast('Дождись конца раунда');return}$('#nick').value=ME.n;$('#login').hidden=false};
+$('#lgo').onclick=signInCloudAccount;$('#registerBtn').onclick=registerCloudAccount;
+['authEmail','authPassword'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{if(e.key==='Enter')signInCloudAccount()}));
+$('#me').onclick=async()=>{if(R.on||cbusy||ubusy||D.busy){toast('Дождись конца раунда');return}if(!authUser||!sb)return;if(!confirm('Выйти из аккаунта? Незавершённый прогресс будет сохранён.'))return;save();const {error}=await sb.auth.signOut();if(error)toast('Не удалось выйти: '+error.message)};
 setInterval(()=>{if(ME){grTick();const ev=ACC.timedEvent;if(ev?.active&&Date.now()>=ev.endsAt)eventTick();else if(!ev?.active&&Date.now()>=ev.nextAt)eventTick()}},1000);setInterval(()=>{if(ME)save()},12000);addEventListener('beforeunload',()=>save());$('#eventClaim').onclick=claimTimedEvent;
 
 /* ===== магазин косметики профиля ===== */
@@ -654,5 +759,6 @@ $('#pgo').onclick=()=>{ac();const c=$('#pin').value.trim().toUpperCase(),m=$('#p
 renderAccountUpgrades();updateProgress();
 
 rdraw();
+initializeCloudAuth();
 </script>
 </body></html>
