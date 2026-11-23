@@ -679,6 +679,25 @@ $('#dgo').onclick=async()=>{ac();if(D.busy)return;const total=Object.values(D.b)
 /* название|цена в ₽|оценка|эмодзи|теги (u США, r Россия, s кислые, c шоколад, h леденцы, g жевательные, n ностальгия, o хэллоуин) */
 const CD=`Skittles|110|8|🌈|ug;M&M's|100|8|🔴|uc;Snickers|70|8|🥜|uc;Twix|65|8|🍫|uc;Reese's Cups|180|9|🧡|uc;Hershey's Kisses|250|6|💋|uc;Jolly Rancher|150|7|🍏|uh;Starburst|140|7|⭐|ug;Sour Patch Kids|200|8|👶|usg;Swedish Fish|220|6|🐟|ugo;Nerds|130|7|🧪|us;Twizzlers|180|5|🍓|ug;Tootsie Roll|90|4|🟤|uno;Milk Duds|170|5|🟫|uco;Butterfinger|110|7|🟧|uc;Airheads|60|6|🌀|ugn;Laffy Taffy|55|5|😂|ugn;Pop Rocks|120|7|💥|uso;Candy Corn|200|3|🌽|uo;Peeps|250|4|🐥|ugo;Warheads|140|6|☠️|usho;Dum Dums|20|5|🍭|uhn;Fun Dip|90|5|🥄|usn;Whoppers|160|6|⚪|uco;Junior Mints|130|6|🌿|uco;Jelly Belly|300|9|🫘|ugo;Мишка косолапый|25|9|🐻|rcn;Красная шапочка|30|8|🧒|rcn;Белочка|28|8|🐿️|rcn;Ласточка|25|7|🐦|rc;Каракум|30|7|🏜️|rcn;Коровка|12|7|🐄|rn;Кис-кис|10|6|🐱|rn;Барбарис|8|6|🔴|rshn;Дюшес|8|5|🍐|rhn;Раковая шейка|30|8|🦞|rcn;Чупа-Чупс|20|6|🍭|rhn;Алёнка|110|8|👧|rc;Рот Фронт|450|7|🎁|rc;Рафаэлло|650|9|🥥|rc;Птичье молоко|420|9|🕊️|rc;Зефир в шоколаде|220|8|☁️|rcg;Лимонные дольки|70|7|🍋|rgs;Холодок|15|4|🧊|rh;Коркунов|550|8|💎|rc;Love Is|10|9|💕|rn;Турбо|10|8|🏎️|rn;Золотой ключик|20|7|🔑|rn;Грильяж|15|6|🌰|rc;Бабаевский|120|7|🍫|rc;Макарон «Лавандовый сад»|1800|9|🟣|d;Эклер «Шафран»|4200|10|🟡|d;Пирожное «Красный бархат»|8500|9|🔺|d;Набор макарун «Париж»|16000|10|🌸|d;Торт «Золотой бархат»|42000|10|👑|d;Бенто-торт «Лунный сад»|78000|10|🌙|d;Пирожное «Корона императора»|145000|10|💠|dx;Торт «Королевская коллекция»|280000|10|🏆|dx`.split(';').map(l=>{const[n,b,r,e,t]=l.split('|');return{id:n.toLowerCase().replace(/[^a-zа-я0-9]+/gi,'-'),n,e,t,rub:+b,r:+r,p:Math.round(+b*(.4+r*.25)*4)}});
 /* цена в фантиках = реальная цена × (0.4 + оценка/4) × 4 */
+// Server catalog is authoritative for online upgrader targets.
+let UPGRADE_TARGETS=null, UPGRADE_TARGETS_PROMISE=null, UPGRADE_TARGETS_ERROR=null;
+async function loadUpgradeTargets(){
+ if(!authUser){UPGRADE_TARGETS=CD;return UPGRADE_TARGETS;}
+ const rows=await cloudRpc('fantik_get_upgrade_targets',{});
+ if(!Array.isArray(rows)||!rows.length)throw new Error('UPGRADE_CATALOG_EMPTY');
+ const mapped=rows.map(row=>{
+   const id=String(row.item_id||'');
+   const local=CD.find(c=>c.id===id);
+   const p=Number(row.item_value);
+   if(!id||!Number.isFinite(p)||p<=0)return null;
+   return {...(local||{}),id,n:String(row.item_name||local?.n||id),e:String(row.item_emoji||local?.e||'🍬'),p,
+     t:local?.t||'custom',r:local?.r||5,rub:local?.rub??Math.round(p/10)};
+ }).filter(Boolean);
+ if(!mapped.length)throw new Error('UPGRADE_CATALOG_EMPTY');
+ UPGRADE_TARGETS=mapped;
+ UPGRADE_TARGETS_ERROR=null;
+ return UPGRADE_TARGETS;
+}
 const tier=p=>p<150?0:p<500?1:p<1500?2:p<3500?3:4;
 const candyArtCache=new Map();
 function candyArt(c){
@@ -778,9 +797,19 @@ $('#isell').onclick=async()=>{const ids=[...SEL];if(!ids.length)return toast('В
 $('#iall').onclick=async()=>{if(!INV.length)return;if(authUser){const ids=INV.map(o=>o.u);try{const result=await cloudRpc('fantik_sell_items',{p_item_ids:ids,p_request_id:crypto.randomUUID()});await refreshEconomy();SEL.clear();ACC.stats.itemsSold=(ACC.stats.itemsSold||0)+Number(result.sold||0);recordAction('sell','Продажа всего склада',Number(result.credited));coin();toast('Продано всё за 🍬 '+fmt(result.credited));save()}catch(e){toast('Не удалось продать: '+e.message)}return}if((ACC.lockedItems||[]).some(u=>INV.some(o=>o.u===u)))return toast('Сначала сними защиту с ценных предметов');const base=INV.reduce((s,o)=>s+o.c.p,0);if(!base)return;const v=Math.floor(base*(1+(ACC?.upgrades?.resale||0)*.03));INV=[];SEL.clear();setBal(v);ACC.stats=ACC.stats||{};ACC.stats.itemsSold=(ACC.stats.itemsSold||0)+1;recordAction('sell','Продажа всего склада',v);coin();toast('Продано всё за 🍬 '+fmt(v));rInv();save()};
 function rUp(){USEL.forEach(u=>{if(!INV.some(o=>o.u==u))USEL.delete(u)});const el=$('#ugrid');el.innerHTML=invHTML(USEL);bindSel(el,USEL,uCalc);uCalc()}
 function uCalc(){const v=val(USEL),g=$('#utg');if(TG&&TG.p<=v)TG=null;
- g.innerHTML=!v?"<p class='mut'>Сначала выбери свои конфеты</p>":CD.filter(c=>c.p>v).sort((a,b)=>a.p-b.p).map(c=>card(c,Math.min(95,v/c.p*95+(ACC?.upgrades?.luck||0)).toFixed(1)+'% шанс',`data-n='${CD.indexOf(c)}'`)).join('')||"<p class='mut'>Дороже уже нечего 😎</p>";
- const hl=()=>g.querySelectorAll('.ci').forEach(x=>x.classList.toggle('sel',!!TG&&CD[+x.dataset.n]==TG));
- g.querySelectorAll('.ci').forEach(d=>d.onclick=()=>{TG=CD[+d.dataset.n];hl();uInfo()});hl();uInfo()}
+ if(authUser&&!UPGRADE_TARGETS){
+   g.innerHTML=UPGRADE_TARGETS_ERROR?`<p class='mut'>Не удалось загрузить список целей с сервера: ${UPGRADE_TARGETS_ERROR}</p><button id='retryUpgradeTargets'>Повторить загрузку</button>`:"<p class='mut'>Загружаем каталог целей с сервера…</p>";
+   const retry=$('#retryUpgradeTargets');if(retry)retry.onclick=()=>{UPGRADE_TARGETS_ERROR=null;UPGRADE_TARGETS_PROMISE=null;uCalc()};
+   if(!UPGRADE_TARGETS_PROMISE&&!UPGRADE_TARGETS_ERROR){
+     UPGRADE_TARGETS_PROMISE=loadUpgradeTargets().then(()=>{UPGRADE_TARGETS_PROMISE=null;uCalc()}).catch(e=>{UPGRADE_TARGETS_PROMISE=null;UPGRADE_TARGETS_ERROR=e.message||'Ошибка каталога';uCalc()});
+   }
+   return;
+ }
+ const targets=authUser?(UPGRADE_TARGETS||[]):CD;
+ const available=targets.filter(c=>Number(c.p)>v).sort((a,b)=>Number(a.p)-Number(b.p));
+ g.innerHTML=!v?"<p class='mut'>Сначала выбери свои конфеты</p>":available.map(c=>card(c,Math.min(95,v/c.p*95+(ACC?.upgrades?.luck||0)).toFixed(1)+'% шанс',`data-target-id='${String(c.id).replace(/'/g,'&#39;')}'`)).join('')||"<p class='mut'>Дороже уже нечего 😎</p>";
+ const hl=()=>g.querySelectorAll('.ci').forEach(x=>x.classList.toggle('sel',!!TG&&x.dataset.targetId===TG.id));
+ g.querySelectorAll('.ci').forEach(d=>d.onclick=()=>{TG=targets.find(c=>c.id===d.dataset.targetId)||null;hl();uInfo()});hl();uInfo()}
 function uInfo(){const v=val(USEL),ch=TG&&v?Math.min(95,v/TG.p*95+(ACC?.upgrades?.luck||0)):0;$('#uzone').style.width=ch+'%';$('#uinfo').textContent=TG&&v?`🍬 ${fmt(v)} → ${TG.e} ${TG.n} (🍬 ${fmt(TG.p)}): шанс ${ch.toFixed(1)}%`:'Выбери конфеты и цель'}
 $('#ugo').onclick=async()=>{ac();if(ubusy)return;const v=val(USEL);if(!v||!TG){toast('Выбери конфеты и цель');return}
  const T=TG,m=$('#umark');let r,ch,serverResult=null;ubusy=true;
@@ -870,7 +899,7 @@ function applyEconomyState(state){
 async function refreshEconomy(){const state=await getEconomyState();applyEconomyState(state);return state;}
 let rewardPollAt=0,rewardPollBusy=false;
 async function refreshCloudRewards(){if(!authUser||rewardPollBusy)return;rewardPollBusy=true;try{const state=await cloudRpc('fantik_get_reward_state',{});applyRewardState(state);grTick();eventTick();}catch(e){console.warn('Reward sync:',e.message)}finally{rewardPollBusy=false;rewardPollAt=Date.now()}}
-function rpcErrorText(message){const m=String(message||'');if(m.includes('INSUFFICIENT_FUNDS'))return 'Не хватает фантиков.';if(m.includes('ITEM_NOT_OWNED_OR_LOCKED'))return 'Предмет не принадлежит тебе или защищён от продажи.';if(m.includes('ROCKET_ALREADY_RUNNING'))return 'У тебя уже идёт раунд ракеты.';if(m.includes('UPGRADE_MAXED'))return 'Улучшение уже максимального уровня.';if(m.includes('UPGRADE_TEMPORARILY_DISABLED'))return 'Это улучшение временно отключено в онлайн-режиме.';if(m.includes('PROMO_ALREADY_USED'))return 'Этот промокод уже активирован на аккаунте.';if(m.includes('PROMO_NOT_FOUND'))return 'Такого или активного промокода нет.';if(m.includes('GRANDMA_NOT_AVAILABLE'))return 'Бабушкин подарок сейчас недоступен.';if(m.includes('EVENT_NOT_AVAILABLE'))return 'Время события закончилось или награда уже получена.';if(m.includes('COSMETIC_ALREADY_OWNED'))return 'Этот предмет оформления уже куплен.';if(m.includes('COSMETIC_NOT_OWNED'))return 'Сначала купи этот предмет оформления.';if(m.includes('TARGET_NOT_HIGHER'))return 'Цель должна быть дороже выбранных конфет.';return m;}
+function rpcErrorText(message){const m=String(message||'');if(m.includes('INSUFFICIENT_FUNDS'))return 'Не хватает фантиков.';if(m.includes('ITEM_NOT_OWNED_OR_LOCKED'))return 'Предмет не принадлежит тебе или защищён от продажи.';if(m.includes('ROCKET_ALREADY_RUNNING'))return 'У тебя уже идёт раунд ракеты.';if(m.includes('UPGRADE_MAXED'))return 'Улучшение уже максимального уровня.';if(m.includes('UPGRADE_TEMPORARILY_DISABLED'))return 'Это улучшение временно отключено в онлайн-режиме.';if(m.includes('PROMO_ALREADY_USED'))return 'Этот промокод уже активирован на аккаунте.';if(m.includes('PROMO_NOT_FOUND'))return 'Такого или активного промокода нет.';if(m.includes('GRANDMA_NOT_AVAILABLE'))return 'Бабушкин подарок сейчас недоступен.';if(m.includes('EVENT_NOT_AVAILABLE'))return 'Время события закончилось или награда уже получена.';if(m.includes('COSMETIC_ALREADY_OWNED'))return 'Этот предмет оформления уже куплен.';if(m.includes('COSMETIC_NOT_OWNED'))return 'Сначала купи этот предмет оформления.';if(m.includes('TARGET_NOT_HIGHER'))return 'Цель должна быть дороже выбранных конфет.';if(m.includes('TARGET_ITEM_NOT_FOUND'))return 'Выбранная цель отсутствует в серверном каталоге. Обнови каталог целей и попробуй снова.';if(m.includes('UPGRADE_CATALOG_EMPTY'))return 'Серверный каталог для апгрейдера пуст. Проверь SQL-миграцию каталога.';return m;}
 async function cloudRpc(name,args){if(!sb||!authUser)throw new Error('Нужно войти в облачный аккаунт.');const {data,error}=await sb.rpc(name,args);if(error)throw new Error(rpcErrorText(error.message));return data;}
 async function refreshEconomyQuiet(){try{return await refreshEconomy()}catch(e){cloudStatus('⚠️ Не удалось обновить экономику: '+e.message);throw e}}
 
@@ -909,6 +938,7 @@ function friendlyAuthError(message){
 }
 async function completeCloudLogin(user){
  if(!sb||!user)throw new Error('Не найден аккаунт Supabase.');
+ UPGRADE_TARGETS=null;UPGRADE_TARGETS_PROMISE=null;UPGRADE_TARGETS_ERROR=null;
  if(cloudLastSnapshotUser!==user.id){cloudLastSnapshotUser=null;cloudLastSnapshotJson=null;}
  const {data:profile,error:profileError}=await sb.from('profiles').select('username,avatar').eq('id',user.id).single();
  if(profileError)throw new Error('Не удалось загрузить профиль: '+profileError.message+' — проверь, что SQL-скрипт выполнен.');
