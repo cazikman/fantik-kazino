@@ -484,42 +484,59 @@ $$(".tab").forEach(b=>b.onclick=()=>{$$(".tab").forEach(x=>x.classList.toggle("o
 $("#mute").onclick=()=>{muted=!muted;$("#mute").textContent=muted?"🔇":"🔊";if(muted&&bus)bus.gain.value=0;if(ME){ACC.settings=ACC.settings||{};ACC.settings.muted=muted;queueSave()}};
 $("#gran").onclick=()=>claimGrandma();
 /* ---------- rocket ---------- */
-const rc=$("#rc"),dpr=Math.min(2,devicePixelRatio||1);
-const R={on:false,bet:0,cashed:false,crash:1,m:1,t:0,auto:0,t0:0,serverRoundId:null,pollBusy:false,lastPoll:0,lastServerSync:0,pollDelay:650,syncStale:false,settled:false,cashPending:false};
-function rsz(){rc.width=rc.clientWidth*dpr;rc.height=rc.clientHeight*dpr}
+const rc=$("#rc"),dpr=Math.min(1.5,devicePixelRatio||1);
+const MAX_ROCKET_MULTIPLIER=1000,MAX_ROCKET_TIME=Math.log(MAX_ROCKET_MULTIPLIER)/.15;
+const R={on:false,bet:0,cashed:false,crash:1,m:1,t:0,auto:0,t0:0,serverRoundId:null,pollBusy:false,lastPoll:0,lastServerSync:0,pollDelay:1000,syncStale:false,settled:false,cashPending:false,rafId:0,lastPaint:0,lastBotTick:0,lastDrawKey:''};
+function rsz(){rc.width=Math.max(1,Math.floor(rc.clientWidth*dpr));rc.height=Math.max(1,Math.floor(rc.clientHeight*dpr))}
 function rdraw(){rsz();draw(R.t,R.m,!R.on&&R.m>1&&R.crash==R.m)}
 addEventListener("resize",()=>{if(!$("#rocket").hidden)rdraw()});
-function draw(t,m,dead){const c=rc.getContext("2d"),w=rc.width,h=rc.height;c.clearRect(0,0,w,h);
- const T=Math.max(6,t*1.15),M=Math.max(2,m*1.25),lm=Math.log(M),px=s=>40*dpr+(s/T)*(w-100*dpr),py=v=>h-30*dpr-(Math.log(v)/lm)*(h-90*dpr);
- c.lineWidth=5*dpr;c.lineCap="round";c.strokeStyle=dead?"#ff3b3b":"#ffd400";c.shadowBlur=20;c.shadowColor=c.strokeStyle;c.beginPath();
- for(let s=0,st=t/60||1;s<=t;s+=st)c[s?"lineTo":"moveTo"](px(s),py(Math.exp(.15*s)));c.lineTo(px(t),py(m));c.stroke();c.shadowBlur=0;
- c.font=48*dpr+"px serif";c.fillText(dead?"💥":"🚀",px(t)-22*dpr,py(m)+14*dpr)}
-function rloop(now){
- if(!R.on)return;
- let t,m;
+function draw(t,m,dead){
+ const safeT=Number.isFinite(t)?Math.max(0,Math.min(MAX_ROCKET_TIME,t)):0;
+ const safeM=Number.isFinite(m)?Math.max(1,Math.min(MAX_ROCKET_MULTIPLIER,m)):1;
+ const c=rc.getContext("2d"),w=rc.width,h=rc.height;c.clearRect(0,0,w,h);
+ const T=Math.max(6,safeT*1.15),M=Math.max(2,safeM*1.25),lm=Math.log(M),px=x=>40*dpr+(x/T)*(w-100*dpr),py=v=>h-30*dpr-(Math.log(Math.max(1,Math.min(MAX_ROCKET_MULTIPLIER,v)))/lm)*(h-90*dpr);
+ c.lineWidth=5*dpr;c.lineCap="round";c.strokeStyle=dead?"#ff3b3b":"#ffd400";c.shadowBlur=12*dpr;c.shadowColor=c.strokeStyle;c.beginPath();
+ // Exactly 49 points: never loop over an unbounded time or multiplier value.
+ for(let i=0;i<=48;i++){const x=safeT*i/48;const y=Math.min(MAX_ROCKET_MULTIPLIER,Math.exp(.15*x));c[i?"lineTo":"moveTo"](px(x),py(y))}
+ c.lineTo(px(safeT),py(safeM));c.stroke();c.shadowBlur=0;
+ c.font=42*dpr+"px serif";c.fillText(dead?"💥":"🚀",px(safeT)-22*dpr,py(safeM)+14*dpr)
+}
+function startRocketLoop(){if(R.on&&!document.hidden&&!R.rafId)R.rafId=requestAnimationFrame(rloop)}
+function rloop(frameNow){
+ R.rafId=0;
+ if(!R.on||document.hidden)return;
+ const stamp=Date.now(),now=Number.isFinite(frameNow)?frameNow:performance.now();let t,m;
  const cloudRound=!!(authUser&&R.serverRoundId);
  if(cloudRound){
-  const stamp=Date.now();
-  if(!R.pollBusy&&stamp-(R.lastPoll||0)>=(R.pollDelay||650)){R.lastPoll=stamp;pollCloudRocket();}
-  if(stamp-(R.lastServerSync||0)>3500&&!R.syncStale){
-   R.syncStale=true;
-   $('#rmsg').textContent='⚠️ Нет ответа игрового сервера. Множитель заморожен до подтверждения результата.';
-  }
-  // В облачном режиме используем только последний множитель, подтверждённый Supabase.
-  // Клиентский таймер больше не может бесконечно разгонять отображаемую выплату.
-  t=Number.isFinite(R.t)?R.t:0;
-  m=Number.isFinite(R.m)?Math.min(1000,Math.max(1,R.m)):1;
+  if(!R.pollBusy&&stamp-(R.lastPoll||0)>=(R.pollDelay||1000)){R.lastPoll=stamp;pollCloudRocket()}
+  if(stamp-(R.lastServerSync||0)>3500&&!R.syncStale){R.syncStale=true;$('#rmsg').textContent='⚠️ Нет ответа игрового сервера. Множитель заморожен до подтверждения результата.'}
+  // Online display always uses the last multiplier confirmed by Supabase.
+  t=Number.isFinite(R.t)?Math.max(0,Math.min(MAX_ROCKET_TIME,R.t)):0;
+  m=Number.isFinite(R.m)?Math.min(MAX_ROCKET_MULTIPLIER,Math.max(1,R.m)):1;
  }else{
-  t=Math.max(0,(now-R.t0)/1000);R.t=t;R.m=Math.exp(.15*t);m=R.m;
-  if(m>=R.crash)return rcrash();
+  const crash=Number.isFinite(R.crash)?Math.max(1,Math.min(MAX_ROCKET_MULTIPLIER,R.crash)):1;
+  const crashTime=Math.log(crash)/.15;
+  t=Math.min(crashTime,Math.max(0,(now-R.t0)/1000));R.t=t;R.m=Math.min(crash,Math.exp(.15*t));m=R.m;
+  if(m>=crash)return rcrash();
  }
  if(R.auto&&!R.cashed&&!cloudRound&&m>=R.auto)cash(R.auto);
- $('#mult').textContent=m.toFixed(2)+'x';
- botTick(m);
- if(!R.cashed)$('#rgo').textContent=(R.syncStale?'ПРОВЕРИТЬ ВЫВОД · ':'ЗАБРАТЬ ')+fmt(R.bet*m)+' 🍬';
- draw(t,m,false);
- requestAnimationFrame(rloop);
+ // Paint at 30 fps, update simulated bot rows at 4 fps; don't repaint hidden rocket UI.
+ if(now-(R.lastPaint||0)>=1000/30){
+  R.lastPaint=now;
+  if(!$('#rocket').hidden){
+   const multText=m.toFixed(2)+'x';if($('#mult').textContent!==multText)$('#mult').textContent=multText;
+   if(!R.cashed){const buttonText=(R.syncStale?'ПРОВЕРИТЬ ВЫВОД · ':'ЗАБРАТЬ ')+fmt(R.bet*m)+' 🍬';if($('#rgo').textContent!==buttonText)$('#rgo').textContent=buttonText}
+   const drawKey=`${t.toFixed(3)}:${m.toFixed(2)}:${R.syncStale?1:0}`;
+   if(drawKey!==R.lastDrawKey){R.lastDrawKey=drawKey;draw(t,m,false)}
+  }
+  if(!$('#rocket').hidden&&now-(R.lastBotTick||0)>=250){R.lastBotTick=now;botTick(m)}
+ }
+ R.rafId=requestAnimationFrame(rloop);
 }
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden){if(R.rafId){cancelAnimationFrame(R.rafId);R.rafId=0}}
+ else if(R.on){R.lastPoll=0;startRocketLoop();if(authUser&&R.serverRoundId)pollCloudRocket()}
+});
 async function cash(m){
  if(authUser){
   if(!R.serverRoundId||R.cashed||R.cashPending)return;
@@ -562,7 +579,7 @@ async function pollCloudRocket(){
   if(!Number.isFinite(serverMult)||serverMult<1||serverMult>1000)throw new Error('Сервер вернул некорректный множитель');
   if(state.balance!==undefined&&Number.isFinite(Number(state.balance))){bal=Number(state.balance);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal)}
   const wasStale=R.syncStale;
-  R.lastServerSync=Date.now();R.syncStale=false;R.pollDelay=650;
+  R.lastServerSync=Date.now();R.syncStale=false;R.pollDelay=1000;
   if(status==='lost'||status==='round_over'){
    R.crash=serverMult;R.m=serverMult;R.t=Math.log(serverMult)/.15;R.cashed=status==='round_over'||R.cashed;rcrash();return;
   }
@@ -583,13 +600,13 @@ async function pollCloudRocket(){
 }
 function resumeCloudRocket(active){
  if(!active?.round_id||R.on)return;
- Object.assign(R,{on:true,bet:Number(active.bet),cashed:false,m:1,t:0,crash:1000,auto:0,t0:performance.now(),serverRoundId:active.round_id,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:450,syncStale:false,settled:false,cashPending:false});
+ Object.assign(R,{on:true,bet:Number(active.bet),cashed:false,m:1,t:0,crash:1000,auto:0,t0:performance.now(),serverRoundId:active.round_id,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Проверяем состояние активного раунда на сервере…';
  $('#rgo').classList.add('pulse');$('#rgo').disabled=false;$('#rgo').textContent='ПРОВЕРКА СЕРВЕРНОГО РАУНДА…';
- requestAnimationFrame(rloop);pollCloudRocket();
+ startRocketLoop();pollCloudRocket();
 }
 function rcrash(){
- if(R.settled)return;R.settled=true;R.on=false;R.serverRoundId=null;
+ if(R.settled)return;R.settled=true;R.on=false;R.serverRoundId=null;if(R.rafId){cancelAnimationFrame(R.rafId);R.rafId=0;}
  R.m=Math.max(1,Math.min(1000,Number(R.crash)||1));R.crash=R.m;
  if(!R.cashed){ACC.pendingRocket=null;recordAction('rocket','Ракета упала',0);addXP(3);save()}else ACC.pendingRocket=null;
  botEnd();$('#mult').textContent=R.crash.toFixed(2)+'x';$('#mult').classList.add('dead');draw(R.t,R.m,true);
@@ -607,17 +624,17 @@ $('#rgo').onclick=async()=>{
  if(authUser){try{const result=await cloudRpc('fantik_rocket_start',{p_bet:b});serverRoundId=result.round_id;startedAt=Date.parse(result.started_at)||Date.now();startingBalance=Number(result.balance)}catch(e){toast('Не удалось начать раунд: '+e.message);return}}
  else setBal(-b);
  const elapsed=Math.max(0,(Date.now()-startedAt)/1000);
- Object.assign(R,{on:true,bet:b,cashed:false,m:1,t:0,crash,auto:+$('#rauto').value||0,t0:performance.now()-elapsed*1000,serverRoundId,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:450,syncStale:false,settled:false,cashPending:false});
+ Object.assign(R,{on:true,bet:b,cashed:false,m:1,t:0,crash,auto:+$('#rauto').value||0,t0:performance.now()-elapsed*1000,serverRoundId,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
  if(authUser){bal=startingBalance;$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingRocket=null}else ACC.pendingRocket={bet:b,crash:R.crash,auto:R.auto,startedAt:Date.now()};
  ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;save();
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Ставка '+fmt(b)+' 🍬 — взлетаем!';$('#rgo').classList.add('pulse');
- tone(120,.8,'sawtooth',.12,0,500);requestAnimationFrame(rloop);
+ tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
 };
 /* ---------- double ---------- */
 /* 12 секторов: синий 6, зелёный 5, жёлтый 1. Два базовых цвета дают ×2, жёлтый — ×14. */
 const ORD=[1,7,2,8,3,9,4,0,10,5,11,6],col=n=>n===0?'y':n<=6?'b':'g',CW=64,strip=$('#strip');
 const D_COLORS={b:{label:'синее',coef:2,mark:'⬟'},g:{label:'зелёное',coef:2,mark:'✦'},y:{label:'жёлтое',coef:14,mark:'★'}},DOUBLE_CONFIG={multiplierChance:.065,multiplierValue:2,revealDelay:900};
-strip.innerHTML=Array.from({length:150},(_,i)=>{const n=ORD[i%ORD.length],c=col(n);return `<div class="c ${c}"><span class="sticker ${c}">${D_COLORS[c].mark}</span></div>`}).join('');
+strip.innerHTML=Array.from({length:132},(_,i)=>{const n=ORD[i%ORD.length],c=col(n);return `<div class="c ${c}"><span class="sticker ${c}">${D_COLORS[c].mark}</span></div>`}).join('');
 let DS={i:22,j:0};
 function setPos(i,j,anim){const W=$('.wheel').clientWidth||360;if(!anim)strip.style.transition='none';strip.style.transform=`translateX(${-(i*CW+CW/2+j-W/2)}px)`;DS={i,j}}
 setPos(22,0,false);addEventListener('resize',()=>setPos(DS.i,DS.j,false));
@@ -657,7 +674,9 @@ $('#dgo').onclick=async()=>{ac();if(D.busy)return;const total=Object.values(D.b)
 const CD=`Skittles|110|8|🌈|ug;M&M's|100|8|🔴|uc;Snickers|70|8|🥜|uc;Twix|65|8|🍫|uc;Reese's Cups|180|9|🧡|uc;Hershey's Kisses|250|6|💋|uc;Jolly Rancher|150|7|🍏|uh;Starburst|140|7|⭐|ug;Sour Patch Kids|200|8|👶|usg;Swedish Fish|220|6|🐟|ugo;Nerds|130|7|🧪|us;Twizzlers|180|5|🍓|ug;Tootsie Roll|90|4|🟤|uno;Milk Duds|170|5|🟫|uco;Butterfinger|110|7|🟧|uc;Airheads|60|6|🌀|ugn;Laffy Taffy|55|5|😂|ugn;Pop Rocks|120|7|💥|uso;Candy Corn|200|3|🌽|uo;Peeps|250|4|🐥|ugo;Warheads|140|6|☠️|usho;Dum Dums|20|5|🍭|uhn;Fun Dip|90|5|🥄|usn;Whoppers|160|6|⚪|uco;Junior Mints|130|6|🌿|uco;Jelly Belly|300|9|🫘|ugo;Мишка косолапый|25|9|🐻|rcn;Красная шапочка|30|8|🧒|rcn;Белочка|28|8|🐿️|rcn;Ласточка|25|7|🐦|rc;Каракум|30|7|🏜️|rcn;Коровка|12|7|🐄|rn;Кис-кис|10|6|🐱|rn;Барбарис|8|6|🔴|rshn;Дюшес|8|5|🍐|rhn;Раковая шейка|30|8|🦞|rcn;Чупа-Чупс|20|6|🍭|rhn;Алёнка|110|8|👧|rc;Рот Фронт|450|7|🎁|rc;Рафаэлло|650|9|🥥|rc;Птичье молоко|420|9|🕊️|rc;Зефир в шоколаде|220|8|☁️|rcg;Лимонные дольки|70|7|🍋|rgs;Холодок|15|4|🧊|rh;Коркунов|550|8|💎|rc;Love Is|10|9|💕|rn;Турбо|10|8|🏎️|rn;Золотой ключик|20|7|🔑|rn;Грильяж|15|6|🌰|rc;Бабаевский|120|7|🍫|rc;Макарон «Лавандовый сад»|1800|9|🟣|d;Эклер «Шафран»|4200|10|🟡|d;Пирожное «Красный бархат»|8500|9|🔺|d;Набор макарун «Париж»|16000|10|🌸|d;Торт «Золотой бархат»|42000|10|👑|d;Бенто-торт «Лунный сад»|78000|10|🌙|d;Пирожное «Корона императора»|145000|10|💠|dx;Торт «Королевская коллекция»|280000|10|🏆|dx`.split(';').map(l=>{const[n,b,r,e,t]=l.split('|');return{id:n.toLowerCase().replace(/[^a-zа-я0-9]+/gi,'-'),n,e,t,rub:+b,r:+r,p:Math.round(+b*(.4+r*.25)*4)}});
 /* цена в фантиках = реальная цена × (0.4 + оценка/4) × 4 */
 const tier=p=>p<150?0:p<500?1:p<1500?2:p<3500?3:4;
+const candyArtCache=new Map();
 function candyArt(c){
+ const cacheKey=c?.id||c?.n||'';if(candyArtCache.has(cacheKey))return candyArtCache.get(cacheKey);
  const h=[...c.n].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,7),pal=[['#ff6b8a','#7d183e'],['#ffcf55','#a94b14'],['#75d6ff','#1649a3'],['#c99cff','#54227c'],['#7ce6ad','#14583f'],['#ff9a58','#873417']],p=pal[h%pal.length],shape=h%5,accent=['#fff1b6','#ffffff','#ffe4fb','#d4fbff','#fff'][h%5],dessert=c.t.includes('d');
  let body='';
  if(dessert&&/макарон|макарун/i.test(c.n))body=`<g stroke="#fff9" stroke-width="2"><ellipse cx="60" cy="43" rx="34" ry="22" fill="url(#g)"/><path d="M28 47 Q60 59 92 47" stroke="${accent}" stroke-width="6" fill="none"/><ellipse cx="60" cy="70" rx="34" ry="22" fill="${p[0]}"/><path d="M28 73 Q60 85 92 73" stroke="${accent}" stroke-width="6" fill="none"/></g>`;
@@ -671,7 +690,7 @@ function candyArt(c){
  else body=`<path d="M60 18 C82 18 100 39 91 60 C84 79 36 83 28 60 C19 39 38 18 60 18Z" fill="url(#g)" stroke="#fff9" stroke-width="2"/><path d="M37 47 Q60 30 83 47" stroke="${accent}" stroke-width="6" fill="none" stroke-linecap="round"/>`;
  const dots=Array.from({length:3+h%4},(_,i)=>`<circle cx="${36+(i*19+h%11)%48}" cy="${38+(i*13+h%9)%27}" r="${2+i%2}" fill="${accent}" opacity=".85"/>`).join(''),emblem=h.toString(36).slice(-3).toUpperCase();
  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${accent}"/><stop offset=".35" stop-color="${p[0]}"/><stop offset="1" stop-color="${p[1]}"/></linearGradient><radialGradient id="shine"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><ellipse cx="60" cy="103" rx="39" ry="7" fill="#000" opacity=".28"/>${body}${dessert?dots:shape!==3?dots:''}<rect x="87" y="84" width="22" height="12" rx="5" fill="#140a2a" fill-opacity=".72"/><text x="98" y="92.5" text-anchor="middle" font-family="system-ui,sans-serif" font-size="6" font-weight="900" fill="#fff">${emblem}</text><ellipse cx="43" cy="31" rx="19" ry="10" fill="url(#shine)" opacity=".8" transform="rotate(-20 43 31)"/><path d="M21 89 Q60 101 99 89" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/></svg>`;
- return 'data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg)
+ const src='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);candyArtCache.set(cacheKey,src);return src
 }
 const card=(c,x,a='')=>`<div ${a} class='ci t${tier(c.p)}'><img class="candy-art" loading="lazy" src="${candyArt(c)}" alt="${c.n}"><b>${c.n}</b><span class='pr'>🍬 ${fmt(c.p)} <small>${rubLabel(c.p)}</small></span><small>${x||'Справочная цена: '+c.rub+' ₽ · ★'+c.r}</small></div>`;
 const caseDefs=[
@@ -783,7 +802,7 @@ function botEvt(){const n=pick(BN),a=pick(BA),x=rnd();let t,p;
  feed(t,p);setTimeout(botEvt,2500+rnd()*3500)}
 function mkBot(L){let n,i=0;do{n=pick(BN)}while(L.some(b=>b.n==n)&&++i<20);return{n,a:pick(BA),b:Math.round(Math.pow(10,1.7+rnd()*2.1)/10)*10,st:0}}
 const tg=()=>Math.round((rnd()<.15?5+rnd()*25:1.1-Math.log(rnd())*1.1)*100)/100,dc=()=>pick(['b','b','b','b','b','b','g','g','g','g','g','y']);
-function live(el,L,dbl){el.innerHTML=[...L].sort((a,b)=>b.b-a.b).map(b=>`<div class='lr ${b.st==1?'w':b.st==2?'l':''}'><span>${b.a} ${b.n}</span><span>${dbl?{b:'🔵',g:'🟢',y:'🟡'}[b.c]+' ':''}🍬 ${fmt(b.b)}</span><span>${b.st==1?(dbl?'':'x'+b.t.toFixed(2)+' ')+'+'+fmt(b.w-b.b):b.st==2?'−'+fmt(b.b):'ставка'}</span></div>`).join('')}
+function live(el,L,dbl){const html=[...L].sort((a,b)=>b.b-a.b).map(b=>`<div class='lr ${b.st==1?'w':b.st==2?'l':''}'><span>${b.a} ${b.n}</span><span>${dbl?{b:'🔵',g:'🟢',y:'🟡'}[b.c]+' ':''}🍬 ${fmt(b.b)}</span><span>${b.st==1?(dbl?'':'x'+b.t.toFixed(2)+' ')+'+'+fmt(b.w-b.b):b.st==2?'−'+fmt(b.b):'ставка'}</span></div>`).join('');if(el.dataset.lastMarkup!==html){el.innerHTML=html;el.dataset.lastMarkup=html}}
 function botTick(m){let ch=0;for(const b of RB)if(!b.st&&m>=b.t){b.st=1;b.w=Math.floor(b.b*b.t);ch=1;if(b.w-b.b>=3000)feed(`${b.a} ${b.n} вывел ${fmt(b.w)} 🍬 на ${b.t.toFixed(2)}x`,b.w)}if(ch)live($('#rlive'),RB)}
 function botStart(){while(RB.length<6)RB.push(mkBot(RB));RB.forEach(b=>{b.t=tg();b.st=0});RE=0;live($('#rlive'),RB)}
 function botEnd(){RB.forEach(b=>{if(!b.st)b.st=2});RE=Date.now();live($('#rlive'),RB)}
@@ -803,7 +822,7 @@ const GR=300000, SAVE_VERSION=3, KEY=n=>'fc_acc_'+String(n).trim().toLowerCase()
 // Supabase client configuration. Fill these two values after creating your Supabase project.
 const SUPABASE_URL = 'https://vftiyvrwvqujqlbthsuj.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_SN0vQ0lHB9IjIa0Qi0BomA_GLw_xyGt';
-let sb=null, authUser=null, cloudSyncTimer=0, cloudSyncBusy=false, cloudSyncAgain=false, cloudErrorShown=false;
+let sb=null, authUser=null, cloudSyncTimer=0, cloudSyncBusy=false, cloudSyncAgain=false, cloudErrorShown=false, cloudLastSnapshotUser=null, cloudLastSnapshotJson=null;
 const cloudConfigured = () => /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL) && /^(sb_publishable_|eyJ)/.test(SUPABASE_PUBLISHABLE_KEY);
 function cloudStatus(message){
  const st=$('#saveStatus'),card=$('#cloudSaveCard'),title=$('#cloudSaveTitle'),time=$('#cloudSaveTime');
@@ -854,15 +873,22 @@ async function syncCloudSave(){
  if(!sb||!authUser||!ACC)return;
  if(cloudSyncBusy){cloudSyncAgain=true;return;}
  cloudSyncBusy=true;
+ const owner=authUser.id;
  const snapshot=JSON.parse(JSON.stringify(ACC));
- // Server-authoritative fields are never written from the browser.
- ['balance','bal','inventory','inv','upgrades','favorites','lockedItems','pendingReward','pendingDouble','stagedDouble','pendingRocket','claimedRewards','ownedCosmetics','equipped','promos','grandmaEvent','timedEvent','rewards'].forEach(k=>delete snapshot[k]);
+ // Server-authoritative fields and volatile timestamps are never written from the browser.
+ ['balance','bal','inventory','inv','upgrades','favorites','lockedItems','pendingReward','pendingDouble','stagedDouble','pendingRocket','claimedRewards','ownedCosmetics','equipped','promos','grandmaEvent','timedEvent','rewards','updatedAt'].forEach(k=>delete snapshot[k]);
+ const snapshotJson=JSON.stringify(snapshot);
+ if(cloudLastSnapshotUser===owner&&cloudLastSnapshotJson===snapshotJson){
+  cloudSyncBusy=false;
+  if(cloudSyncAgain){cloudSyncAgain=false;scheduleCloudSave();}
+  return;
+ }
  let error=null;
- try{const result=await sb.from('player_saves').upsert({user_id:authUser.id,game_data:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});error=result.error||null;}
+ try{const result=await sb.from('player_saves').upsert({user_id:owner,game_data:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});error=result.error||null;}
  catch(e){error=e;}
  cloudSyncBusy=false;
  if(error){cloudStatus('⚠️ Не удалось синхронизировать: '+error.message);if(!cloudErrorShown){toast('Облачное сохранение не удалось. Проверь SQL и политики Supabase.');cloudErrorShown=true;}}
- else{cloudErrorShown=false;cloudStatus('☁️ Синхронизировано с облаком · '+new Date().toLocaleTimeString('ru-RU'));}
+ else{cloudLastSnapshotUser=owner;cloudLastSnapshotJson=snapshotJson;cloudErrorShown=false;cloudStatus('☁️ Синхронизировано с облаком · '+new Date().toLocaleTimeString('ru-RU'));}
  if(cloudSyncAgain){cloudSyncAgain=false;scheduleCloudSave();}
 }
 function friendlyAuthError(message){
@@ -877,6 +903,7 @@ function friendlyAuthError(message){
 }
 async function completeCloudLogin(user){
  if(!sb||!user)throw new Error('Не найден аккаунт Supabase.');
+ if(cloudLastSnapshotUser!==user.id){cloudLastSnapshotUser=null;cloudLastSnapshotJson=null;}
  const {data:profile,error:profileError}=await sb.from('profiles').select('username,avatar').eq('id',user.id).single();
  if(profileError)throw new Error('Не удалось загрузить профиль: '+profileError.message+' — проверь, что SQL-скрипт выполнен.');
  const {data:cloudSave,error:saveError}=await sb.from('player_saves').select('game_data').eq('user_id',user.id).maybeSingle();
@@ -995,7 +1022,7 @@ let AV=ls.get('fc_av')||BA[0];$('#avs').innerHTML=BA.map(a=>`<button data-a='${a
 $('#lgo').onclick=signInCloudAccount;$('#registerBtn').onclick=registerCloudAccount;
 ['authEmail','authPassword'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{if(e.key==='Enter')signInCloudAccount()}));
 $('#me').onclick=async()=>{if(R.on||cbusy||ubusy||D.busy){toast('Дождись конца раунда');return}if(!authUser||!sb)return;if(!confirm('Выйти из аккаунта? Незавершённый прогресс будет сохранён.'))return;save();const {error}=await sb.auth.signOut();if(error)toast('Не удалось выйти: '+error.message)};
-setInterval(()=>{if(!ME)return;if(authUser){grTick();eventTick();if(Date.now()-rewardPollAt>7000&&!rewardPollBusy)refreshCloudRewards()}else{grTick();const ev=ACC.timedEvent;if(ev?.active&&Date.now()>=ev.endsAt)eventTick();else if(!ev?.active&&Date.now()>=ev.nextAt)eventTick()}},1000);setInterval(()=>{if(ME)save()},12000);addEventListener('beforeunload',()=>save());$('#eventClaim').onclick=claimTimedEvent;
+setInterval(()=>{if(!ME)return;if(authUser){grTick();eventTick();if(Date.now()-rewardPollAt>20000&&!rewardPollBusy)refreshCloudRewards()}else{grTick();const ev=ACC.timedEvent;if(ev?.active&&Date.now()>=ev.endsAt)eventTick();else if(!ev?.active&&Date.now()>=ev.nextAt)eventTick()}},1000);setInterval(()=>{if(ME)save()},30000);addEventListener('beforeunload',()=>save());$('#eventClaim').onclick=claimTimedEvent;
 
 /* ===== магазин косметики профиля ===== */
 const SHOP_CATEGORIES=[['all','Все'],['frame','Рамки'],['background','Фоны'],['badge','Значки'],['title','Титулы'],['name','Никнеймы'],['effect','Эффекты'],['theme','Темы']];
