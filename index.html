@@ -1140,5 +1140,270 @@ renderAccountUpgrades();updateProgress();
 rdraw();
 initializeCloudAuth();
 </script>
-  <script src="./candy-icons-integration.js"></script>
+  <script>
+/*
+ * ФАНТИК-КАЗИНО — подключение проверенных candy-icons.
+ * Подключать после основного inline-скрипта index.html.
+ * Использует существующую candyArt() как fallback для остальных предметов.
+ */
+(function () {
+  "use strict";
+
+  // В mapping.json exact_match:true только для этих ID каталога (32 изображения).
+  const VERIFIED_CANDY_IDS = new Set([
+    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+    27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42
+  ]);
+
+  // Сохраняем исходный генератор SVG: он останется fallback для 26 черновых
+  // картинок и для случаев, когда файл WebP не загрузился.
+  const originalCandyArt = window.candyArt;
+
+  if (typeof originalCandyArt !== "function" || typeof CD === "undefined") {
+    console.error("Candy icons: не найдены CD или исходная candyArt(). Скрипт подключён не после основного index.html.");
+    return;
+  }
+
+  function getCatalogId(candy) {
+    if (!candy) return 0;
+    const index = CD.findIndex(item =>
+      (candy.id && item.id === candy.id) ||
+      (candy.n && item.n === candy.n)
+    );
+    return index >= 0 ? index + 1 : 0;
+  }
+
+  // Подменяем только источник изображения. Каталог, цены, экономика и логика
+  // предметов остаются прежними. Общая card() использует этот helper в разных экранах.
+  window.candyArt = function (candy) {
+    const id = getCatalogId(candy);
+    if (VERIFIED_CANDY_IDS.has(id)) {
+      return `./candy-icons/candy-${String(id).padStart(2, "0")}.webp`;
+    }
+    return originalCandyArt(candy);
+  };
+
+  // Если WebP отсутствует или повреждён — возвращаем прежнюю SVG-иллюстрацию.
+  document.addEventListener("error", function (event) {
+    const img = event.target;
+    if (!(img instanceof HTMLImageElement) || !img.classList.contains("candy-art")) return;
+    if (img.dataset.candyFallback === "1") return;
+
+    const card = img.closest(".ci");
+    const name = card?.querySelector("b")?.textContent?.trim();
+    const candy = CD.find(item => item.n === name);
+    if (!candy) return;
+
+    img.dataset.candyFallback = "1";
+    img.src = originalCandyArt(candy);
+  }, true);
+
+  // Обновляем карточки, которые могли успеть нарисоваться до загрузки этого файла.
+  document.querySelectorAll("img.candy-art").forEach(img => {
+    const card = img.closest(".ci");
+    const name = card?.querySelector("b")?.textContent?.trim();
+    const candy = CD.find(item => item.n === name);
+    if (candy) img.src = window.candyArt(candy);
+  });
+
+  console.info("Candy icons: подключены 32 проверенных изображения; остальные используют прежние SVG.");
+})();
+
+</script>
+<script>
+/*
+ * ФАНТИК-КАЗИНО — небольшая полировка интерфейса.
+ * Подключать после основного inline-скрипта и candy-icons-integration.js.
+ * Не меняет игровые расчёты, Supabase RPC, экономику или сохранения.
+ */
+(() => {
+  'use strict';
+
+  const $ = (selector, root = document) => root.querySelector(selector);
+
+  const css = `
+    /* Общая визуальная обратная связь */
+    nav .tab {
+      border: 1px solid #ffffff18;
+      border-radius: 12px;
+      transition: background .18s ease, color .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+    nav .tab.on {
+      background: linear-gradient(135deg, #ffe66b, #ffc400) !important;
+      color: #211331 !important;
+      border-color: #fff0a6;
+      box-shadow: 0 5px 18px #ffd40035, inset 0 1px #ffffff90;
+    }
+    button:focus-visible, .cs:focus-visible, .ci:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 2px solid #ffe36a;
+      outline-offset: 3px;
+    }
+    button:not(:disabled) { transition: filter .16s ease, box-shadow .16s ease, transform .16s ease; }
+    button:not(:disabled):hover { filter: brightness(1.09); }
+    .cs { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+    .cs:hover { transform: translateY(-3px); }
+    .ci { transition: transform .16s ease, outline-color .16s ease, box-shadow .16s ease; }
+    .ci:hover { transform: translateY(-2px); }
+
+    /* Кейс как самостоятельный экран поверх каталога */
+    body.case-page-open { overflow: hidden; }
+    body.case-page-open::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 800;
+      background: #070315eF;
+      -webkit-backdrop-filter: blur(9px);
+      backdrop-filter: blur(9px);
+    }
+    #cview[hidden] { display: none !important; }
+    #cview:not([hidden]) {
+      position: fixed !important;
+      z-index: 801;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: min(980px, calc(100vw - 34px));
+      max-height: calc(100vh - 34px);
+      max-height: calc(100dvh - 34px);
+      overflow: auto;
+      overscroll-behavior: contain;
+      padding: clamp(14px, 2.4vw, 24px);
+      border: 1px solid #9277d966;
+      border-radius: 26px;
+      background: radial-gradient(ellipse at 50% 0%, #2b1c55 0%, #130c2c 46%, #0b061d 100%);
+      box-shadow: 0 28px 90px #000d, 0 0 34px #8c5aff22;
+      scrollbar-width: thin;
+      scrollbar-color: #7656ac #160d2c;
+      animation: case-screen-in .22s ease-out both;
+    }
+    #cview #cback {
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      margin: 0 0 10px;
+      border: 1px solid #ffffff26;
+      background: linear-gradient(135deg, #493477, #2b1d50);
+      box-shadow: 0 5px 16px #0005;
+    }
+    #cview .case-hero {
+      grid-template-columns: minmax(124px, 180px) minmax(0, 1fr);
+      margin-top: 8px;
+    }
+    #cview #copen {
+      display: block;
+      width: min(100%, 560px);
+      margin: 14px auto 20px;
+      min-height: 52px;
+      box-shadow: 0 9px 25px #ffd40020;
+    }
+    #cview #ccont {
+      grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
+      gap: 10px;
+    }
+
+    /* Более удобная навигация на узких экранах */
+    @media (max-width: 599px) {
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 90;
+        display: flex;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
+        gap: 7px;
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+        scrollbar-width: none;
+        padding: 8px 10px 10px;
+        background: #0b0524ed;
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid #ffffff16;
+      }
+      nav::-webkit-scrollbar { display: none; }
+      nav .tab { flex: 0 0 auto; white-space: nowrap; padding: 10px 12px; }
+      nav #mute { flex: 0 0 auto; }
+      #cview:not([hidden]) {
+        inset: 0 !important;
+        left: 0;
+        top: 0;
+        transform: none;
+        width: 100vw;
+        height: 100vh;
+        height: 100dvh;
+        max-height: none;
+        padding: calc(env(safe-area-inset-top, 0px) + 12px) 12px calc(env(safe-area-inset-bottom, 0px) + 20px);
+        border: 0;
+        border-radius: 0;
+        box-shadow: none;
+      }
+      #cview .case-hero { grid-template-columns: minmax(92px, 112px) minmax(0, 1fr); gap: 10px; }
+      #cview #ccont { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @keyframes case-screen-in {
+      from { opacity: 0; transform: translate(-50%, calc(-50% + 10px)); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
+    }
+    @media (max-width: 599px) {
+      @keyframes case-screen-in {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #cview:not([hidden]) { animation: none; }
+      nav .tab, button, .cs, .ci { transition: none !important; }
+    }
+  `;
+
+  if (!$('#fantik-ui-polish-v1')) {
+    const style = document.createElement('style');
+    style.id = 'fantik-ui-polish-v1';
+    style.textContent = css;
+    document.head.appendChild(style);
+  }
+
+  // Точное имя раздела по просьбе владельца игры.
+  const upgraderTab = $('nav .tab[data-t="up"]');
+  if (upgraderTab) upgraderTab.textContent = '⬆️ Апгрейдер';
+
+  const progressTitle = $('#up .progress-top h3');
+  if (progressTitle && progressTitle.textContent.trim() === 'Развитие аккаунта') {
+    progressTitle.textContent = 'Прогресс аккаунта';
+  }
+
+  // Экран кейса открывается существующей игровой функцией openView().
+  // Следим за штатными hidden-переключателями, не подменяя логику покупки/открытия.
+  const casesSection = $('#cases');
+  const caseView = $('#cview');
+  if (casesSection && caseView && 'MutationObserver' in window) {
+    caseView.setAttribute('role', 'dialog');
+    caseView.setAttribute('aria-modal', 'true');
+    caseView.setAttribute('aria-labelledby', 'cname');
+    const syncCaseScreen = () => {
+      const opened = !casesSection.hidden && !caseView.hidden;
+      document.body.classList.toggle('case-page-open', opened);
+    };
+    const observer = new MutationObserver(syncCaseScreen);
+    observer.observe(casesSection, { attributes: true, attributeFilter: ['hidden'] });
+    observer.observe(caseView, { attributes: true, attributeFilter: ['hidden'] });
+    syncCaseScreen();
+
+    const backButton = $('#cback');
+    if (backButton) backButton.addEventListener('click', () => requestAnimationFrame(syncCaseScreen));
+
+    // Escape возвращает в каталог только когда игра разрешает нажать «Все кейсы».
+    document.addEventListener('keydown', event => {
+      if (event.key !== 'Escape' || !document.body.classList.contains('case-page-open')) return;
+      const back = $('#cback');
+      if (back && !back.disabled) {
+        event.preventDefault();
+        back.click();
+      }
+    });
+  }
+})();
+
+</script>
 </body></html>
