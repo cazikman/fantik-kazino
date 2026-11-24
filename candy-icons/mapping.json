@@ -1,0 +1,582 @@
+[
+  {
+    "id": 1,
+    "name": "Skittles",
+    "image": "candy-01.webp",
+    "source_tile": 1,
+    "visual_description": "Skittles rainbow fruit candy pouch",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 2,
+    "name": "M&M's",
+    "image": "candy-02.webp",
+    "source_tile": 2,
+    "visual_description": "M&M's colorful chocolate button candy pouch",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 3,
+    "name": "Snickers",
+    "image": "candy-03.webp",
+    "source_tile": 3,
+    "visual_description": "Snickers chocolate peanut nougat bar wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 4,
+    "name": "Twix",
+    "image": "candy-04.webp",
+    "source_tile": 4,
+    "visual_description": "Twix two-finger caramel biscuit chocolate bar wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 5,
+    "name": "Reese's Cups",
+    "image": "candy-05.webp",
+    "source_tile": 25,
+    "visual_description": "Reese's orange peanut butter cups wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 6,
+    "name": "Hershey's Kisses",
+    "image": "candy-06.webp",
+    "source_tile": 52,
+    "visual_description": "Hershey's Kisses silver foil chocolate drops",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 7,
+    "name": "Jolly Rancher",
+    "image": "candy-07.webp",
+    "source_tile": 5,
+    "visual_description": "Jolly Rancher assorted hard fruit candy wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 8,
+    "name": "Starburst",
+    "image": "candy-08.webp",
+    "source_tile": 6,
+    "visual_description": "Starburst colorful square fruit chews wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 9,
+    "name": "Sour Patch Kids",
+    "image": "candy-09.webp",
+    "source_tile": 7,
+    "visual_description": "Sour Patch Kids sour gummy candy pouch",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 10,
+    "name": "Swedish Fish",
+    "image": "candy-10.webp",
+    "source_tile": 34,
+    "visual_description": "Swedish Fish red fish-shaped gummy candy pouch",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 11,
+    "name": "Nerds",
+    "image": "candy-11.webp",
+    "source_tile": 26,
+    "visual_description": "Nerds tiny multicolor crunchy candy box",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 12,
+    "name": "Twizzlers",
+    "image": "candy-12.webp",
+    "source_tile": 22,
+    "visual_description": "Twizzlers red strawberry licorice twists wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 13,
+    "name": "Tootsie Roll",
+    "image": "candy-13.webp",
+    "source_tile": 41,
+    "visual_description": "Tootsie Roll dark chocolate chewy candy wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 14,
+    "name": "Milk Duds",
+    "image": "candy-14.webp",
+    "source_tile": 27,
+    "visual_description": "Milk Duds chocolate caramel candy box",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 15,
+    "name": "Butterfinger",
+    "image": "candy-15.webp",
+    "source_tile": 17,
+    "visual_description": "Butterfinger crispety peanut butter chocolate bar wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 16,
+    "name": "Airheads",
+    "image": "candy-16.webp",
+    "source_tile": 23,
+    "visual_description": "Airheads taffy candy strip wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-visual-match",
+    "source": "new dedicated 4x4 brand sheet"
+  },
+  {
+    "id": 17,
+    "name": "Laffy Taffy",
+    "image": "candy-17.webp",
+    "source_tile": 24,
+    "visual_description": "Laffy Taffy long chewy fruit taffy wrapper",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 18,
+    "name": "Pop Rocks",
+    "image": "candy-18.webp",
+    "source_tile": 32,
+    "visual_description": "Pop Rocks popping candy packet",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 19,
+    "name": "Candy Corn",
+    "image": "candy-19.webp",
+    "source_tile": 29,
+    "visual_description": "Candy Corn tri-color candy pieces",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 20,
+    "name": "Peeps",
+    "image": "candy-20.webp",
+    "source_tile": 31,
+    "visual_description": "Peeps yellow marshmallow chick candy",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 21,
+    "name": "Warheads",
+    "image": "candy-21.webp",
+    "source_tile": 30,
+    "visual_description": "Warheads extreme sour candy wrapper",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 22,
+    "name": "Dum Dums",
+    "image": "candy-22.webp",
+    "source_tile": 13,
+    "visual_description": "Dum Dums round lollipop wrapper",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 23,
+    "name": "Fun Dip",
+    "image": "candy-23.webp",
+    "source_tile": 48,
+    "visual_description": "Fun Dip flavored sugar candy packet with dipping stick",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 24,
+    "name": "Whoppers",
+    "image": "candy-24.webp",
+    "source_tile": 16,
+    "visual_description": "Whoppers malted milk chocolate balls box",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 25,
+    "name": "Junior Mints",
+    "image": "candy-25.webp",
+    "source_tile": 14,
+    "visual_description": "Junior Mints dark chocolate mint candies box",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 26,
+    "name": "Jelly Belly",
+    "image": "candy-26.webp",
+    "source_tile": 43,
+    "visual_description": "Jelly Belly assorted jelly beans bag",
+    "exact_match": false,
+    "mapping_status": "draft-art-direction",
+    "source": "previous generic generated sheet"
+  },
+  {
+    "id": 27,
+    "name": "Мишка косолапый",
+    "image": "candy-27.webp",
+    "source_tile": 35,
+    "visual_description": "Мишка косолапый Russian chocolate wafer candy in red-brown wrapper with bear",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 28,
+    "name": "Красная шапочка",
+    "image": "candy-28.webp",
+    "source_tile": 36,
+    "visual_description": "Красная шапочка Russian chocolate candy in red wrapper with Little Red Riding Hood motif",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 29,
+    "name": "Белочка",
+    "image": "candy-29.webp",
+    "source_tile": 49,
+    "visual_description": "Белочка Russian chocolate candy in brown wrapper with squirrel illustration",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 30,
+    "name": "Ласточка",
+    "image": "candy-30.webp",
+    "source_tile": 33,
+    "visual_description": "Ласточка Russian chocolate candy in blue wrapper with swallow illustration",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 31,
+    "name": "Каракум",
+    "image": "candy-31.webp",
+    "source_tile": 37,
+    "visual_description": "Каракум Russian chocolate candy in sandy-gold wrapper with desert pattern",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 32,
+    "name": "Коровка",
+    "image": "candy-32.webp",
+    "source_tile": 38,
+    "visual_description": "Коровка Russian creamy milk fudge candy in cream-yellow wrapper with cow",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 33,
+    "name": "Кис-кис",
+    "image": "candy-33.webp",
+    "source_tile": 39,
+    "visual_description": "Кис-кис Russian chewy toffee in yellow-orange striped wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 34,
+    "name": "Барбарис",
+    "image": "candy-34.webp",
+    "source_tile": 8,
+    "visual_description": "Барбарис Russian red barberry hard candy in red wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 35,
+    "name": "Дюшес",
+    "image": "candy-35.webp",
+    "source_tile": 40,
+    "visual_description": "Дюшес Russian pear-drop hard candy in green-yellow wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 36,
+    "name": "Раковая шейка",
+    "image": "candy-36.webp",
+    "source_tile": 9,
+    "visual_description": "Раковая шейка Russian pink praline candy in vintage wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 37,
+    "name": "Чупа-Чупс",
+    "image": "candy-37.webp",
+    "source_tile": 45,
+    "visual_description": "Чупа-Чупс round fruit lollipop with branded flower wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 38,
+    "name": "Алёнка",
+    "image": "candy-38.webp",
+    "source_tile": 10,
+    "visual_description": "Алёнка Russian milk chocolate bar in red wrapper with headscarf girl illustration",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 39,
+    "name": "Рот Фронт",
+    "image": "candy-39.webp",
+    "source_tile": 51,
+    "visual_description": "Рот Фронт Russian chocolate candy assortment in red wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 40,
+    "name": "Рафаэлло",
+    "image": "candy-40.webp",
+    "source_tile": 11,
+    "visual_description": "Рафаэлло white coconut almond praline in white wrapper",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 41,
+    "name": "Птичье молоко",
+    "image": "candy-41.webp",
+    "source_tile": 12,
+    "visual_description": "Птичье молоко Russian chocolate-coated soufflé candy",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 42,
+    "name": "Зефир в шоколаде",
+    "image": "candy-42.webp",
+    "source_tile": 15,
+    "visual_description": "Зефир в шоколаде Russian chocolate-coated marshmallow",
+    "exact_match": true,
+    "mapping_status": "generated-name-matched",
+    "source": "dedicated 4x4 Russian sweets sheet; cell order follows catalog"
+  },
+  {
+    "id": 43,
+    "name": "Лимонные дольки",
+    "image": "candy-43.webp",
+    "source_tile": 18,
+    "visual_description": "Лимонные дольки translucent yellow lemon jelly wedges",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 44,
+    "name": "Холодок",
+    "image": "candy-44.webp",
+    "source_tile": 19,
+    "visual_description": "Холодок Russian mint cooling hard candy in blue-green wrapper",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 45,
+    "name": "Коркунов",
+    "image": "candy-45.webp",
+    "source_tile": 20,
+    "visual_description": "Коркунов premium dark chocolate praline in elegant brown-gold wrapper",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 46,
+    "name": "Love Is",
+    "image": "candy-46.webp",
+    "source_tile": 21,
+    "visual_description": "Love Is bubblegum pack with nostalgic couple illustration",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 47,
+    "name": "Турбо",
+    "image": "candy-47.webp",
+    "source_tile": 47,
+    "visual_description": "Турбо retro Turbo bubblegum wrapper",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 48,
+    "name": "Золотой ключик",
+    "image": "candy-48.webp",
+    "source_tile": 28,
+    "visual_description": "Золотой ключик Russian caramel toffee in golden wrapper",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 49,
+    "name": "Грильяж",
+    "image": "candy-49.webp",
+    "source_tile": 50,
+    "visual_description": "Грильяж Russian nut brittle chocolate candy",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 50,
+    "name": "Бабаевский",
+    "image": "candy-50.webp",
+    "source_tile": 53,
+    "visual_description": "Бабаевский premium dark chocolate bar in deep brown-gold wrapper",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 51,
+    "name": "Макарон «Лавандовый сад»",
+    "image": "candy-51.webp",
+    "source_tile": 42,
+    "visual_description": "Макарон «Лавандовый сад» lavender-colored French macaron",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 52,
+    "name": "Эклер «Шафран»",
+    "image": "candy-52.webp",
+    "source_tile": 54,
+    "visual_description": "Эклер «Шафран» saffron cream éclair with delicate glaze",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 53,
+    "name": "Пирожное «Красный бархат»",
+    "image": "candy-53.webp",
+    "source_tile": 55,
+    "visual_description": "Пирожное «Красный бархат» red velvet mini cake with cream",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 54,
+    "name": "Набор макарун «Париж»",
+    "image": "candy-54.webp",
+    "source_tile": 44,
+    "visual_description": "Набор макарун «Париж» elegant assortment of colorful macarons in gift box",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 55,
+    "name": "Торт «Золотой бархат»",
+    "image": "candy-55.webp",
+    "source_tile": 56,
+    "visual_description": "Торт «Золотой бархат» luxurious golden velvet layer cake",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 56,
+    "name": "Бенто-торт «Лунный сад»",
+    "image": "candy-56.webp",
+    "source_tile": 57,
+    "visual_description": "Бенто-торт «Лунный сад» small moon-and-night-garden themed bento cake",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 57,
+    "name": "Пирожное «Корона императора»",
+    "image": "candy-57.webp",
+    "source_tile": 58,
+    "visual_description": "Пирожное «Корона императора» regal crown-shaped petit gâteau",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  },
+  {
+    "id": 58,
+    "name": "Торт «Королевская коллекция»",
+    "image": "candy-58.webp",
+    "source_tile": 46,
+    "visual_description": "Торт «Королевская коллекция» ornate royal celebration cake",
+    "exact_match": false,
+    "mapping_status": "illustrative-draft",
+    "source": "new numbered candy sheet; unique crop, not exact brand identity"
+  }
+]
