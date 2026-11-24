@@ -251,6 +251,252 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
 .cloud-save-card[data-state="offline"] .cloud-save-copy b,.cloud-save-card[data-state="idle"] .cloud-save-copy b,.cloud-save-card[data-state="offline"] .cloud-save-check,.cloud-save-card[data-state="idle"] .cloud-save-check{color:#c5b6f3}
 @media(max-width:480px){.cloud-save-card{align-items:flex-start;padding:11px}.cloud-save-icon{width:36px;height:36px}.cloud-save-check{padding-top:3px}}
 
+
+
+/* ==========================================================
+   ФАНТИК-КАЗИНО · визуальное обновление интерфейса
+   Отдельный слой оформления; экономика и игровая логика не меняются.
+   ========================================================== */
+:root{
+  --bg:#080b1a;
+  --card:#111a31;
+  --tx:#f5f7ff;
+  --mut:#a8b4d2;
+  --ac:#ffd166;
+  --red:#ff5470;
+  --blk:#202a43;
+  --grn:#32d6a0;
+  --case-edge:#6652a5;
+  --case-glow:#8867ff55;
+}
+html{background:#080b1a;scroll-behavior:smooth}
+body{
+  color:var(--tx);
+  background:
+    radial-gradient(ellipse at 12% -10%,#34316d88 0,transparent 42%),
+    radial-gradient(ellipse at 100% 8%,#173e6580 0,transparent 34%),
+    linear-gradient(155deg,#090d20 0%,#0a1025 48%,#080b19 100%);
+  background-attachment:fixed;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  letter-spacing:.005em;
+}
+header{
+  position:relative;
+  display:flex;align-items:center;gap:12px;
+  padding:18px 20px 15px;
+  border-bottom:1px solid #ffffff12;
+  background:linear-gradient(180deg,#10182ce8,#0b1020b8);
+  backdrop-filter:blur(16px);
+}
+.logo{font-size:clamp(17px,2vw,22px);font-weight:1000;letter-spacing:.045em;text-shadow:0 3px 18px #0008}
+.logo b{color:#ffd166;text-shadow:0 0 18px #ffc34e44}
+.onl{font-size:11px;color:#aebbd5;letter-spacing:.035em}
+.onl b{color:#65e6b7;font-variant-numeric:tabular-nums}
+.bal{
+  display:flex;align-items:center;gap:7px;
+  padding:8px 14px;border:1px solid #f4c95b88;border-radius:14px;
+  color:#fff4d1;background:linear-gradient(145deg,#3c321d,#1a1e2d 75%);
+  box-shadow:inset 0 1px #ffffff12,0 7px 22px #0003;
+  font-size:19px;font-weight:950;font-variant-numeric:tabular-nums;
+}
+.bal small{display:block;color:#d4c18b;font-size:9px;font-weight:700;letter-spacing:.04em}
+header>button{padding:9px 12px;border:1px solid #ffffff18;border-radius:12px;background:#18233d;color:#dbe6ff;font-size:12px;box-shadow:0 4px 12px #0002}
+header>button:hover{background:#263657;border-color:#ffffff35}
+#gran{background:linear-gradient(135deg,#55401b,#342b22);color:#ffe2a1;border-color:#b88d3c66}
+#me{background:#1d2b45}
+nav{
+  position:relative;z-index:5;
+  display:flex;flex-wrap:nowrap;gap:8px;
+  overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;
+  padding:12px 20px 14px;
+  border-bottom:1px solid #ffffff0d;
+  background:#0b1020a8;
+}
+nav::-webkit-scrollbar{display:none}
+nav .tab{
+  flex:0 0 auto;padding:10px 14px;border:1px solid #ffffff12;border-radius:12px;
+  background:linear-gradient(180deg,#1a2742,#131d34);color:#bcc9e5;
+  font-size:12px;font-weight:850;letter-spacing:.015em;
+  box-shadow:inset 0 1px #ffffff09,0 4px 12px #0002;
+  transition:background .18s,border-color .18s,transform .18s,color .18s;
+}
+nav .tab:hover{transform:translateY(-1px);border-color:#8da7d555;color:#fff;background:#223252}
+nav .tab.on{background:linear-gradient(135deg,#ffe18d,#ffb94f);border-color:#ffe7a7;color:#271b09;box-shadow:0 5px 18px #ffbf4a30,inset 0 1px #fff8}
+#mute{flex:0 0 auto;border:1px solid #ffffff18;border-radius:12px;background:#17223b;color:#dce8ff;padding:9px 12px}
+main{width:min(100% - 32px,1180px);max-width:1180px;margin:0 auto;padding:18px 0 30px}
+main>section{animation:sectionIn .22s ease-out}
+@keyframes sectionIn{from{opacity:.65;transform:translateY(5px)}to{opacity:1;transform:none}}
+footer{width:min(100% - 32px,1180px);max-width:1180px;padding:22px 0 30px;border-top:1px solid #ffffff10;color:#8796b6;line-height:1.65}
+h2{font-size:clamp(20px,3vw,27px);font-weight:950;letter-spacing:.015em}
+h3{font-weight:900}
+button{border:1px solid #ffffff13;box-shadow:0 4px 12px #0002;transition:filter .16s,border-color .16s,background .16s,transform .16s}
+button:hover:not(:disabled){filter:brightness(1.1);border-color:#ffffff35}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #80caff;outline-offset:3px}
+.big{border:1px solid #ffe7a7;background:linear-gradient(120deg,#ffe28a,#ffb84a 58%,#ff9c4b);color:#271708;box-shadow:0 8px 24px #ffad4730,inset 0 1px #fff9;font-weight:1000;letter-spacing:.03em}
+.big:hover:not(:disabled){filter:brightness(1.06);box-shadow:0 10px 28px #ffad4744,inset 0 1px #fff9}
+.ctl,.live,.progress-panel,.about-card,.admin-card,.collection-info,.profile-settings,.cloud-save-card{
+  border:1px solid #ffffff16!important;
+  background:linear-gradient(145deg,#172440f2,#101a30f5)!important;
+  box-shadow:0 12px 32px #0002,inset 0 1px #ffffff08;
+}
+.ctl{border-radius:20px;padding:16px}
+input,select,textarea,.inv-tools input,.inv-tools select{
+  color:#f5f7ff;background:#0a1328;border:1px solid #4b5d80;border-radius:11px;
+}
+input:focus,select:focus,textarea:focus{border-color:#87a8ff;box-shadow:0 0 0 3px #7194ff1f}
+label{color:#bac7e1}
+.stage{border:1px solid #6475a766;box-shadow:0 14px 34px #0004,inset 0 0 40px #5866ff12;background-color:#111a34}
+.wheel{border:1px solid #6475a766;background:#0b1428;box-shadow:inset 0 0 24px #0006}
+.hist{padding-bottom:3px}
+.chip{border:1px solid #ffffff22;box-shadow:0 3px 9px #0003}
+.live{margin-top:14px;padding:14px;border-radius:16px}
+.live h4{margin:0 0 10px}
+#feed{background:linear-gradient(180deg,#111a30,#0b1020)!important;border-color:#ffffff18!important;box-shadow:10px 0 34px #0003}
+#feed .feed-head{color:#dbe5ff;letter-spacing:.08em;font-size:11px}
+#feed .fe{border:1px solid #ffffff0c;border-radius:10px;background:#17233b}
+#feed .feed-copy small{color:#9baccc}
+.section-top{margin:4px 0 14px}
+.shop-item,.stat-card,.achievement,.admin-list>*,.admin-item-option{
+  border-color:#ffffff17!important;
+  background:linear-gradient(145deg,#1b2a49,#121d34)!important;
+}
+.shop-item:hover{border-color:#8caaff88!important;transform:translateY(-2px)}
+.profile-card{box-shadow:0 14px 32px #0004}
+#eventbar{border:1px solid #d6a74e66;border-radius:15px;background:linear-gradient(110deg,#312b20,#17213a);color:#ffe6a8;box-shadow:0 8px 26px #0003}
+#toast{border:1px solid #ffd166;background:#111a30f2;box-shadow:0 10px 34px #0006}
+
+/* Главный каталог кейсов: иллюстрация и стоимость — разные блоки. */
+#cases{min-width:0}
+#cgrid{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  grid-auto-rows:auto!important;
+  align-items:stretch;gap:15px!important;
+  margin:0;padding:0;
+}
+.cases-heading{
+  grid-column:1/-1;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  padding:8px 2px 7px;margin:0 0 3px;
+}
+.cases-heading h2{margin:5px 0 4px;font-size:clamp(22px,3vw,30px);line-height:1.08;letter-spacing:.025em}
+.cases-heading p{margin:0;color:#9eaccb;font-size:13px;line-height:1.45}
+.cases-kicker{color:#9eabca;font-size:9px;font-weight:950;letter-spacing:.19em}
+.cases-count{flex:none;padding:8px 12px;border:1px solid #7184ae44;border-radius:30px;background:#16223b;color:#d3def6;font-size:10px;font-weight:950;letter-spacing:.1em}
+#cgrid .cs{
+  position:relative;isolation:isolate;display:flex;flex-direction:column;align-items:stretch;
+  width:100%;height:auto;min-width:0;min-height:0;padding:11px;gap:8px;
+  text-align:center;overflow:hidden;border:1px solid #566b96a1;border-radius:18px;
+  background:linear-gradient(155deg,#1a2948 0%,#121d35 58%,#10182d 100%);
+  box-shadow:0 9px 24px #0003,inset 0 1px #ffffff0d;
+  transition:transform .18s,border-color .18s,box-shadow .18s;
+}
+#cgrid .cs::before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,var(--case-edge,#9b8aff),transparent);opacity:.85;pointer-events:none}
+#cgrid .cs:hover{transform:translateY(-4px);border-color:var(--case-edge,#a99aff);box-shadow:0 15px 30px #0005,0 0 22px var(--case-glow,#8970ff22)}
+#cgrid .cs .case-art{
+  position:relative;display:grid;place-items:center;isolation:isolate;
+  width:100%;height:auto;min-height:0;aspect-ratio:1/1;flex:none;
+  overflow:hidden;border:1px solid #ffffff20;border-radius:13px;
+  padding:8px;background:radial-gradient(ellipse at 50% 40%,#35476c 0%,#1c2c4a 46%,#10192e 100%);
+  box-shadow:inset 0 0 32px #0004;
+}
+#cgrid .cs .case-art::after{
+  content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 100%,#a8c8ff12,transparent 65%),linear-gradient(135deg,#ffffff0b,transparent 40%);
+}
+#cgrid .cs .case-art img{
+  position:relative;z-index:1;display:block;width:100%;height:100%;max-width:100%;max-height:100%;
+  object-fit:contain;object-position:center;padding:5px;
+  filter:drop-shadow(0 8px 9px #0009);
+}
+#cgrid .cs .case-art .case-emoji-art{position:relative;z-index:1;width:100%;height:100%;display:grid;place-items:center;font-size:clamp(48px,7vw,82px)}
+#cgrid .cs>b{
+  display:grid;place-items:center;min-height:2.35em;margin:2px 0 0;padding:0 3px;
+  color:#f5f7ff;font-size:14px;font-weight:900;line-height:1.2;overflow-wrap:anywhere;
+}
+#cgrid .cs .rarity{display:block;min-height:12px;margin:0;color:var(--case-ink,#c5d2ee);font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+#cgrid .cs .case-serial{display:block;margin:-3px 0 0;color:#8393b4;font-size:8px;font-weight:800;letter-spacing:.13em}
+#cgrid .cs .case-price{
+  position:relative;inset:auto;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:7px;
+  width:100%;min-height:42px;margin:5px 0 0;padding:8px 10px;flex:none;
+  border:1px solid #f4cc6d88;border-radius:11px;
+  background:linear-gradient(115deg,#ffe08a,#ffc45e 58%,#f4a947);
+  color:#2c1b08;box-shadow:inset 0 1px #fff9,0 5px 14px #0002;
+}
+#cgrid .cs .case-price>b{color:#2c1b08;font-size:14px;font-weight:1000;line-height:1.1;white-space:nowrap}
+#cgrid .cs .case-price>small{color:#503719;font-size:10px;font-weight:850;white-space:nowrap}
+#cgrid .cs .case-stamp{display:none}
+#cgrid .cs[data-skin="legendary"],#cgrid .cs[data-skin="premium"]{border-color:var(--case-edge)}
+#cgrid .cs[data-skin="legendary"] .case-art,#cgrid .cs[data-skin="premium"] .case-art{background:radial-gradient(ellipse at 50% 40%,#4c4050,#25243b 55%,#131a2e)}
+
+/* Экран выбранного кейса сохраняет крупное изображение и отдельный блок действий. */
+#cview{max-width:940px;margin:0 auto}
+#cback{margin:3px 0 12px;background:#1b2b49;border:1px solid #6b80aa66;color:#e4edff}
+.case-hero{border-color:#7a8cb65c;background:linear-gradient(130deg,#263858,#111b31);box-shadow:0 14px 34px #0004}
+.case-hero-art{background:radial-gradient(circle at 50% 40%,#34496c,#111b31);border-color:#ffffff2a}
+#copen{width:100%;max-width:560px;display:block;margin:16px auto}
+#cview>h4{margin:20px 0 10px}
+#ccont{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:9px}
+
+@media(min-width:1100px){
+  #feed{border-radius:0 18px 18px 0!important;padding:13px!important}
+  main{width:calc(100vw - 316px);max-width:1180px;margin:0 24px 0 270px;padding-top:22px}
+  header,nav,#eventbar{margin-left:270px;margin-right:24px}
+  header{padding-left:0;padding-right:0;background:transparent;border-bottom:1px solid #ffffff12}
+  nav{padding-left:0;padding-right:0;background:transparent}
+}
+@media(min-width:600px) and (max-width:899px){
+  #cgrid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
+  #cgrid .cs{padding:9px;gap:7px}
+  #cgrid .cs .case-art{border-radius:12px}
+}
+@media(max-width:599px){
+  header{gap:8px;padding:13px 12px}
+  header .onl{order:3;width:100%;padding-left:2px}
+  .bal{margin-left:auto;padding:6px 10px;font-size:16px}
+  header>button{padding:8px 9px;font-size:11px}
+  nav{padding:10px 12px 12px;gap:6px}
+  nav .tab{padding:9px 11px;font-size:11px}
+  main{width:calc(100% - 22px);padding:14px 0 24px}
+  #cgrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+  .cases-heading{align-items:flex-start;padding:6px 1px 3px}
+  .cases-heading h2{font-size:21px}
+  .cases-heading p{max-width:245px;font-size:11px}
+  .cases-count{padding:7px 9px;font-size:9px}
+  #cgrid .cs{padding:7px;gap:6px;border-radius:14px}
+  #cgrid .cs .case-art{aspect-ratio:1/1;padding:5px;border-radius:10px}
+  #cgrid .cs .case-art img{padding:3px}
+  #cgrid .cs>b{font-size:12px;min-height:2.4em}
+  #cgrid .cs .rarity{font-size:8px;letter-spacing:.1em}
+  #cgrid .cs .case-serial{font-size:7px}
+  #cgrid .cs .case-price{min-height:37px;padding:7px 7px;border-radius:9px;gap:4px;margin-top:4px}
+  #cgrid .cs .case-price>b{font-size:12px}
+  #cgrid .cs .case-price>small{font-size:9px}
+  .case-hero{grid-template-columns:100px minmax(0,1fr);gap:10px;padding:10px}
+  .case-hero-art{height:116px;min-height:116px}
+  .case-hero-art>img{min-height:0}
+  .ctl{padding:12px;border-radius:16px}
+  .profile-card{border-radius:16px}
+}
+@media(max-width:360px){
+  #cgrid{gap:7px!important}
+  #cgrid .cs{padding:6px}
+  #cgrid .cs .case-price{align-items:flex-start;flex-direction:column;gap:2px}
+}
+@media(prefers-reduced-motion:reduce){main>section{animation:none}}
+
+
+/* Единство оформления для авторизации, магазина и коллекции. */
+#login{background:radial-gradient(ellipse at 50% 25%,#293966 0%,#101a31 42%,#070b18 100%)}
+#promo{background:#050914d9;backdrop-filter:blur(9px)}
+.lcard{background:linear-gradient(150deg,#1a2947,#101a30);border:1px solid #d5b66d88;border-radius:22px;box-shadow:0 24px 70px #0009,inset 0 1px #ffffff12}
+.lcard .logo{font-size:23px}
+.avs button{background:#1b2a47;border:1px solid #ffffff18}
+.avs button.on{outline:2px solid #ffd166;background:#2d3e60}
+.ci{background:linear-gradient(145deg,#1d2d4c,#121d34);border:1px solid #ffffff16;border-bottom:3px solid var(--rc);border-radius:13px;box-shadow:0 6px 16px #0003}
+.ci .pr{color:#ffd166}
+.about-card{line-height:1.6}
+.admin-card{border-radius:17px}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -761,7 +1007,10 @@ const giveItem=c=>{if(!c)return null;const item={u:++uid,c};INV.push(item);ACC.c
 const caseDiscount=()=>Math.min(.15,(ACC?.upgrades?.caseSaver||0)*.03),casePrice=k=>Math.max(5,Math.ceil(k.pr*(1-caseDiscount())/5)*5);
 function escHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
 function caseArtMarkup(k){const image=k.staticIndex!==undefined?CASE_ART[k.staticIndex]:null;return image?`<img src="${image}" alt="${escHtml(k.n)}" loading="lazy">`:`<span class="case-emoji-art">${escHtml(k.e||'📦')}</span>`}
-function rCases(){$('#cgrid').innerHTML=CS.map((k,i)=>`<button class='cs' data-i='${i}' data-skin='${escHtml(k.skin)}'><span class='case-art ${k.custom?'custom-case-art':''}'>${caseArtMarkup(k)}<small class='case-stamp'>${k.custom?'CUSTOM':'CASE'} / ${escHtml(k.serial)}</small></span><b>${escHtml(k.n)}</b><small class="rarity">${escHtml(k.rarity)}</small><span>🍬 ${fmt(casePrice(k))} <small>${rubLabel(casePrice(k))}</small></span></button>`).join('');$$('.cs').forEach(b=>b.onclick=()=>openView(+b.dataset.i))}
+function rCases(){
+  $('#cgrid').innerHTML=`<div class="cases-heading"><div><span class="cases-kicker">ФАНТИК-КАЗИНО · КОЛЛЕКЦИЯ</span><h2>ВЫБЕРИ СВОЙ КЕЙС</h2><p>У каждого кейса — свой набор предметов и шанс на редкую находку.</p></div><span class="cases-count">${CS.length} КЕЙСОВ</span></div>`+CS.map((k,i)=>`<button class="cs" data-i="${i}" data-skin="${escHtml(k.skin)}"><span class="case-art ${k.custom?'custom-case-art':''}">${caseArtMarkup(k)}</span><b>${escHtml(k.n)}</b><small class="rarity">${escHtml(k.rarity)}</small><small class="case-serial">КЕЙС · ${escHtml(k.serial)}</small><span class="case-price"><b>🍬 ${fmt(casePrice(k))}</b><small>${rubLabel(casePrice(k))}</small></span></button>`).join('');
+  $$('.cs').forEach(b=>b.onclick=()=>openView(+b.dataset.i));
+}
 function openView(i){if(pendingCaseItem){toast('Сначала реши, что сделать с выпавшим предметом');return}CUR=CS[i];if(!CUR)return;$('#cgrid').hidden=true;$('#cview').hidden=false;$('#cview').dataset.skin=CUR.skin;$('#caseHero').dataset.skin=CUR.skin;const art=CUR.staticIndex!==undefined?CASE_ART[CUR.staticIndex]:null;$('#caseHeroImage').hidden=!art;$('#caseHeroEmoji').hidden=!!art;if(art){$('#caseHeroImage').src=art;$('#caseHeroImage').alt='Кейс: '+CUR.n}else $('#caseHeroEmoji').textContent=CUR.e||'📦';$('#caseHeroSerial').textContent='CASE FILE / '+CUR.serial;$('#caseHeroTag').textContent=CUR.rarity;$('#caseHeroDesc').textContent=CASE_LORE[CUR.skin]||CUR.description||'Новая авторская серия ФАНТИК-КАЗИНО.';$('#cname').textContent=CUR.n;$('#cchoice').hidden=true;$('#copen').disabled=false;$('#cback').disabled=false;$('#copen').textContent='ОТКРЫТЬ за 🍬 '+fmt(casePrice(CUR))+' · '+rubLabel(casePrice(CUR));$('#cres').textContent='';$('#ccont').innerHTML=[...CUR.it].sort((a,b)=>b.p-a.p).map(c=>{const q=c.w/CUR.W*100;return card(c,q.toFixed(q<1?2:1)+'%')}).join('');const st=$('#cstrip');st.style.transition='none';st.style.transform='none';st.innerHTML=Array.from({length:12},()=>card(roll(CUR))).join('')} $('#cback').onclick=()=>{if(cbusy||pendingCaseItem)return;$('#cgrid').hidden=false;$('#cview').hidden=true};
 function awardPendingCase(id,offline=false){const pending=ACC?.pendingReward;if(!pending||pending.id!==id)return null;if((ACC.claimedRewards||[]).includes(id)){ACC.pendingReward=null;save();return null}const c=CD.find(x=>x.id===pending.itemId);let awarded=null;if(c){awarded=giveItem(c);ACC.claimedRewards=ACC.claimedRewards||[];ACC.claimedRewards.push(id);ACC.claimedRewards=ACC.claimedRewards.slice(-80);ACC.caseCounts=ACC.caseCounts||{};ACC.caseCounts[pending.caseId]=(ACC.caseCounts[pending.caseId]||0)+1;ACC.stats=ACC.stats||{};ACC.stats.casesOpened=(ACC.stats.casesOpened||0)+1;addXP(35+Math.min(100,Math.floor(c.p/2500)));recordAction('case',`Кейс: ${c.n}`,c.p);if(offline)toast(`Награда за открытие восстановлена: ${c.n}`)}ACC.pendingReward=null;save();return awarded;}
 async function finishCaseChoice(action){const item=pendingCaseItem;if(!item)return;if(action==='sell'){const index=INV.findIndex(o=>o.u===item.u);if(index<0){toast('Предмет уже отсутствует на складе');pendingCaseItem=null}else if(authUser){try{const result=await cloudRpc('fantik_sell_items',{p_item_ids:[item.u],p_request_id:crypto.randomUUID()});bal=Number(result.balance);await refreshEconomy();ACC.stats=ACC.stats||{};ACC.stats.itemsSold=(ACC.stats.itemsSold||0)+1;recordAction('sell',`Продажа из кейса: ${item.c.n}`,Number(result.credited));coin();toast('Продано за 🍬 '+fmt(result.credited));pendingCaseItem=null}catch(e){toast('Не удалось продать: '+e.message);return}}else{const base=INV[index].c.p,v=Math.floor(base*(1+(ACC?.upgrades?.resale||0)*.03));INV.splice(index,1);SEL.delete(item.u);setBal(v);ACC.stats=ACC.stats||{};ACC.stats.itemsSold=(ACC.stats.itemsSold||0)+1;recordAction('sell',`Продажа из кейса: ${item.c.n}`,v);coin();toast('Продано за 🍬 '+fmt(v));rInv();pendingCaseItem=null}}else{toast(item.c.n+' оставлен на складе');pendingCaseItem=null}$('#cchoice').hidden=true;$('#copen').disabled=false;$('#cback').disabled=false;if(CUR)$('#copen').textContent='ОТКРЫТЬ за 🍬 '+fmt(casePrice(CUR))+' · '+rubLabel(casePrice(CUR));save()}
