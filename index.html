@@ -1001,9 +1001,11 @@ $('#dgo').onclick=async()=>{ac();if(D.busy)return;const total=Object.values(D.b)
  D.busy=true;$('#dgo').disabled=true;$('#dgo').textContent='СЕРВЕР ОБРАБАТЫВАЕТ СТАВКУ…';dbStart();let round;
  try{
    if(authUser){const result=await cloudRpc('fantik_play_double',{p_wagers:{...D.b},p_request_id:crypto.randomUUID()});
-     bal=Number(result.balance);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);
+     // Сервер уже зафиксировал раунд, но отображаемый баланс обновляем
+     // только в settleDouble() после завершения анимации.
+     const serverBalance=Number(result.balance);
      const winning=result.color,n=Number(result.slot),o=ORD.indexOf(n),j=(rnd()-.5)*36;
-     round={id:result.round_id,rulesVersion:2,n,color:winning,multiplier:Number(result.multiplier),wagers:{...D.b},serverBalance:bal};
+     round={id:result.round_id,rulesVersion:2,n,color:winning,multiplier:Number(result.multiplier),wagers:{...D.b},serverBalance};
    }else{const n=Math.floor(rnd()*12),o0=ORD.indexOf(n),winning=col(n),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1;round={id:'d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:winning,multiplier,wagers:{...D.b}};round._o=o0;}
    const n=round.n,o=ORD.indexOf(n),j=(rnd()-.5)*36,winning=round.color,multiplier=round.multiplier;
    D.current=round;ACC.stagedDouble=null;ACC.pendingDouble=null;save();
@@ -1589,21 +1591,15 @@ initializeCloudAuth();
 </script>
   <script>
 /*
- * ФАНТИК-КАЗИНО — подключение проверенных candy-icons.
- * Подключать после основного inline-скрипта index.html.
- * Использует существующую candyArt() как fallback для остальных предметов.
+ * ФАНТИК-КАЗИНО — подключение полного набора candy-icons.
+ * Использует все 58 WebP из ./candy-icons/; исходный SVG остаётся fallback,
+ * если отдельный файл не загрузился. 32 изображения отмечены в mapping.json
+ * как точные визуальные совпадения, остальные 26 — иллюстративные черновики.
  */
 (function () {
   "use strict";
 
-  // В mapping.json exact_match:true только для этих ID каталога (32 изображения).
-  const VERIFIED_CANDY_IDS = new Set([
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-    27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42
-  ]);
-
-  // Сохраняем исходный генератор SVG: он останется fallback для 26 черновых
-  // картинок и для случаев, когда файл WebP не загрузился.
+  const CANDY_ICON_COUNT = 58;
   const originalCandyArt = window.candyArt;
 
   if (typeof originalCandyArt !== "function" || typeof CD === "undefined") {
@@ -1620,17 +1616,17 @@ initializeCloudAuth();
     return index >= 0 ? index + 1 : 0;
   }
 
-  // Подменяем только источник изображения. Каталог, цены, экономика и логика
-  // предметов остаются прежними. Общая card() использует этот helper в разных экранах.
+  // Для всех 58 позиций каталога используем соответствующий WebP.
+  // Экономика, каталог и игровые функции не меняются.
   window.candyArt = function (candy) {
     const id = getCatalogId(candy);
-    if (VERIFIED_CANDY_IDS.has(id)) {
+    if (id >= 1 && id <= CANDY_ICON_COUNT) {
       return `./candy-icons/candy-${String(id).padStart(2, "0")}.webp`;
     }
     return originalCandyArt(candy);
   };
 
-  // Если WebP отсутствует или повреждён — возвращаем прежнюю SVG-иллюстрацию.
+  // При ошибке загрузки возвращаем исходную SVG-иллюстрацию.
   document.addEventListener("error", function (event) {
     const img = event.target;
     if (!(img instanceof HTMLImageElement) || !img.classList.contains("candy-art")) return;
@@ -1645,7 +1641,7 @@ initializeCloudAuth();
     img.src = originalCandyArt(candy);
   }, true);
 
-  // Обновляем карточки, которые могли успеть нарисоваться до загрузки этого файла.
+  // Обновляем карточки, которые могли отрисоваться до подключения скрипта.
   document.querySelectorAll("img.candy-art").forEach(img => {
     const card = img.closest(".ci");
     const name = card?.querySelector("b")?.textContent?.trim();
@@ -1653,7 +1649,7 @@ initializeCloudAuth();
     if (candy) img.src = window.candyArt(candy);
   });
 
-  console.info("Candy icons: подключены 32 проверенных изображения; остальные используют прежние SVG.");
+  console.info("Candy icons: подключены все 58 WebP; 32 точных визуальных совпадения и 26 иллюстративных черновиков.");
 })();
 
 </script>
