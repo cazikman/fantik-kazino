@@ -497,6 +497,24 @@ label{color:#bac7e1}
 .about-card{line-height:1.6}
 .admin-card{border-radius:17px}
 
+
+/* --- Исправление центрирования контента рядом с лентой активности --- */
+@media (min-width: 1100px) {
+  main, header, nav, #eventbar, footer {
+    width: min(1400px, calc(100vw - 282px));
+    max-width: none;
+    margin-left: max(258px, calc((100vw - 1166px) / 2));
+    margin-right: auto;
+  }
+  main { padding-top: 22px; }
+}
+
+/* В ленте Дабла синий сектор должен оставаться синим, не серым. */
+#double #strip .c.b {
+  background: linear-gradient(145deg, #69caff, #214aab);
+  color: #061c48;
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -884,7 +902,7 @@ $('#rgo').onclick=async()=>{
 };
 /* ---------- double ---------- */
 /* 12 секторов: синий 6, зелёный 5, жёлтый 1. Два базовых цвета дают ×2, жёлтый — ×14. */
-const ORD=[1,7,2,8,3,9,4,0,10,5,11,6],col=n=>n===0?'y':n<=6?'b':'g',CW=64,strip=$('#strip');
+const ORD=[1,7,2,8,3,9,4,0,5,10,6,11],col=n=>n===0?'y':n<=6?'b':'g',CW=64,strip=$('#strip');
 const D_COLORS={b:{label:'синее',coef:2,mark:'⬟'},g:{label:'зелёное',coef:2,mark:'✦'},y:{label:'жёлтое',coef:14,mark:'★'}},DOUBLE_CONFIG={multiplierChance:.065,multiplierValue:2,revealDelay:900};
 strip.innerHTML=Array.from({length:132},(_,i)=>{const n=ORD[i%ORD.length],c=col(n);return `<div class="c ${c}"><span class="sticker ${c}">${D_COLORS[c].mark}</span></div>`}).join('');
 let DS={i:22,j:0};
