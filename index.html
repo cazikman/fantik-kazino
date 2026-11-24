@@ -128,7 +128,7 @@ main{max-width:1100px}header,nav,#feed{max-width:1100px;margin-left:auto;margin-
 header button{padding:7px 10px;font-size:13px}#me{max-width:44vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#gran:disabled{opacity:.7}
 #login{position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 30%,#3a1370,#0b0524 70%);padding:16px;overflow-y:auto}
 #promo{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:#000b;padding:16px}
-#login[hidden],#promo[hidden]{display:none}
+#login[hidden],#promo[hidden],#authorBind[hidden]{display:none}
 .lcard{width:min(420px,100%);background:var(--card);border:2px solid var(--ac);border-radius:20px;padding:22px;display:grid;gap:12px;box-shadow:0 0 40px #ffc93355;text-align:center}
 .avs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.avs button{font-size:22px;padding:6px 8px;background:#0b0524}.avs button.on{outline:3px solid var(--ac)}
 
@@ -505,6 +505,22 @@ label{color:#bac7e1}
 .about-card{line-height:1.6}
 .admin-card{border-radius:17px}
 
+/* Авторская программа: отдельная панель и отдельное окно привязки кода */
+.author-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(105px,1fr));gap:7px;margin:8px 0}
+.author-stat{padding:9px;border:1px solid #493775;border-radius:10px;background:#0e0923;min-width:0}
+.author-stat b{display:block;color:#ffe27a;font-size:16px;overflow-wrap:anywhere}
+.author-stat small{display:block;color:var(--mut);font-size:10px}
+.author-history{display:grid;gap:5px;max-height:300px;overflow:auto}
+.author-history-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;padding:8px;border:1px solid #38295a;border-radius:8px;background:#0e0923;font-size:11px}
+.author-history-row small{display:block;color:var(--mut);font-size:10px;overflow-wrap:anywhere}
+.author-code-list{display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.author-code-pill{font-size:10px;padding:4px 7px;border-radius:20px;background:#30214f;border:1px solid #59427e}
+.author-code-pill.off{opacity:.5;text-decoration:line-through}
+#authorBind{position:fixed;inset:0;z-index:95;display:grid;place-items:center;background:#000b;padding:16px}
+#authorBind .lcard{border-color:#9b75e8}
+.author-note{font-size:11px;color:var(--mut);line-height:1.4}
+@media(max-width:420px){.author-history-row{grid-template-columns:1fr}.author-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
 
 /* --- Исправление центрирования контента рядом с лентой активности --- */
 @media (min-width: 1100px) {
@@ -650,16 +666,50 @@ label{color:#bac7e1}
    <p id="adminCollectionStatus" class="mut" role="status"></p>
   </form>
   <div class="admin-card"><div class="admin-card-head"><h3>🗃️ Коллекции кейсов</h3><button type="button" id="adminRefreshCollections">Обновить</button></div><div id="adminCollectionList" class="admin-list"><p class="mut">Загрузка…</p></div></div>
+  <form id="adminAuthorForm" class="admin-card">
+   <h3>👑 Добавить автора</h3>
+   <label>UUID игрового аккаунта<input id="adminAuthorId" required placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" pattern="[0-9a-fA-F-]{36}"></label>
+   <label>Имя автора<input id="adminAuthorName" maxlength="80" required placeholder="Имя или название канала"></label>
+   <button class="big" type="submit">ДОБАВИТЬ АВТОРА</button>
+   <p id="adminAuthorStatus" class="mut" role="status"></p>
+   <p class="author-note">UUID берётся из профиля Supabase (profiles.id). Никнейма недостаточно для привязки автора.</p>
+  </form>
+  <form id="adminAuthorCodeForm" class="admin-card">
+   <h3>🔑 Выпустить авторский код</h3>
+   <label>Автор<select id="adminAuthorCodeOwner" required><option value="">Сначала добавь автора</option></select></label>
+   <label>Код<input id="adminAuthorCode" maxlength="32" required pattern="[A-Za-z0-9_-]{3,32}" placeholder="Например, STREAMER"></label>
+   <button class="big" type="submit">СОЗДАТЬ КОД</button>
+   <p id="adminAuthorCodeStatus" class="mut" role="status"></p>
+   <p class="author-note">Авторский код только привязывает игрока к автору. Он не выдаёт бонус и не заменяет обычный промокод.</p>
+  </form>
+  <div class="admin-card">
+   <div class="admin-card-head"><h3>📊 Авторы и выплаты</h3><button type="button" id="adminRefreshAuthors">Обновить</button></div>
+   <div id="adminAuthorList" class="admin-list"><p class="mut">Загрузка…</p></div>
+  </div>
+  <div class="admin-card">
+   <h3>💸 Ручная выплата автору</h3>
+   <label>Автор<select id="adminPayoutAuthor" required><option value="">Выбери автора</option></select></label>
+   <label>Сумма к перечислению, фантики<input id="adminPayoutAmount" type="number" min="1" step="1" required placeholder="Например, 5000"></label>
+   <button id="adminPayoutSubmit" class="big" type="button">ПЕРЕЧИСЛИТЬ НА БАЛАНС</button>
+   <p id="adminPayoutStatus" class="mut" role="status"></p>
+   <p class="author-note">Сумма будет зачислена на игровой кошелёк автора. Сервер проверит доступный остаток и не позволит выплатить больше начисленного.</p>
+  </div>
+  <div class="admin-card admin-span">
+   <div class="admin-card-head"><h3 id="adminAuthorDetailsTitle">📜 История автора</h3><span class="mut">Выбери автора в списке</span></div>
+   <h4>Начисления комиссии</h4><div id="adminAuthorCommissionList" class="author-history"><p class="mut">Автор не выбран.</p></div>
+   <h4>История выплат</h4><div id="adminAuthorPayoutList" class="author-history"><p class="mut">Автор не выбран.</p></div>
+  </div>
  </div>
  <p class="admin-footnote">Администраторские права привязаны к ID аккаунта Supabase. Один только ник или изменение HTML не дают доступ к панели.</p>
 </section>
 <section id="about" hidden>
- <h2>О проекте</h2><div class="about-card"><p>ФАНТИК-КАЗИНО — шуточная игра с виртуальной валютой, коллекциями и косметическим прогрессом. Фантики нельзя купить или вывести.</p><h3>Наши партнёры и инвесторы</h3><p class="mut">Это вымышленные роли внутри игрового мира, не реальные деловые отношения и не официальная поддержка.</p><div class="partner-grid"><article><b>Valve</b><span>Поставщик воображаемых коробок и бесконечного «ещё одного открытия».</span><small>Главный консультант по лутбоксам (шутка)</small></article><article><b>Musor Drop</b><span>Отвечает за переработку неудачных выпадений в легенды.</span><small>Директор мусорной логистики</small></article><article><b>Rockstar Games</b><span>Выдала игре лицензию на драматичные подъёмы и падения ракеты — исключительно в фантазии.</span><small>Почётный сценарист хаоса</small></article><article><b>Litvin</b><span>Главный по громким появлениям, внезапным событиям и фантиковому шоу.</span><small>Амбассадор эффектных входов</small></article></div></div>
+ <h2>О проекте</h2><div class="about-card"><p>ФАНТИК-КАЗИНО — шуточная игра с виртуальной валютой, коллекциями и косметическим прогрессом. Фантики нельзя купить или вывести.</p><h3>Наши партнёры и инвесторы</h3><p class="mut">Это вымышленные роли внутри игрового мира, не реальные деловые отношения и не официальная поддержка.</p><div class="partner-grid"><article><b>Valve</b><span>Поставщик воображаемых коробок и бесконечного «ещё одного открытия».</span><small>Главный консультант по лутбоксам (шутка)</small></article><article><b>Musor Drop</b><span>Отвечает за переработку неудачных выпадений в легенды.</span><small>Директор мусорной логистики</small></article><article><b>Rockstar Games</b><span>Выдала игре лицензию на драматичные подъёмы и падения ракеты — исключительно в фантазии.</span><small>Почётный сценарист хаоса</small></article><article><b>Литвин</b><span>Главный по громким появлениям, внезапным событиям и фантиковому шоу.</span><small>Амбассадор эффектных входов</small></article><article><b>Асхаб Тамаев</b><span>Отвечает за мощную энергию, громкие челленджи и максимальный размах.</span><small>Почётный чемпион по масштабу</small></article><article><b>Бустер</b><span>Добавляет проекту стриминговый вайб, эмоции и неожиданные повороты.</span><small>Главный по игровому настроению</small></article><article><b>Анар Абдулаев</b><span>Следит, чтобы в мире ФАНТИК-КАЗИНО всегда было место ярким идеям.</span><small>Почётный хранитель идей</small></article><article><b>Swinline</b><span>За стиль, движение и уверенный заход в следующий раунд.</span><small>Амбассадор игрового ритма</small></article></div></div>
 </section>
 </main>
 <footer>Это шуточная игра: фантики — только виртуальная валюта. Для удобства показан условный курс 10 фантиков = 1 ₽; это не реальные деньги, купить или вывести их нельзя. Прогресс синхронизируется с облачным аккаунтом; локальная копия используется как резервная.<br>Настоящая синхронизация между устройствами требует серверного аккаунта.</footer>
 <div id="login"><div class="lcard"><div class="logo">🎰 ФАНТИК<b>-КАЗИНО</b></div><p class="mut">Облачный аккаунт · вход с любого устройства</p><label>Твой игровой ник<input id="nick" maxlength="16" placeholder="например, Player123" autocomplete="nickname"></label><div class="avs" id="avs"></div><label>Email<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label><label>Пароль<input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Минимум 8 символов"></label><p id="lerr" class="mut" role="status">Создай аккаунт или войди. Прогресс будет привязан к уникальному ID, а не только к нику.</p><button id="lgo" class="big">ВОЙТИ 🍬</button><button id="registerBtn" type="button">СОЗДАТЬ АККАУНТ</button><p class="mut">При первой регистрации локальный прогресс с таким же ником будет перенесён в облако, если он есть в этом браузере.</p></div></div>
-<div id="promo" hidden><div class="lcard"><b>🎁 Промокод от авторов</b><input id="pin" placeholder="Введи код" autocomplete="off" autocapitalize="characters"><button id="pgo" class="big">АКТИВИРОВАТЬ</button><p id="pmsg" class="mut"></p><button id="pclose">Закрыть</button></div></div>
+<div id="promo" hidden><div class="lcard"><b>🎁 Обычный промокод</b><input id="pin" placeholder="Введи промокод с наградой" autocomplete="off" autocapitalize="characters"><button id="pgo" class="big">АКТИВИРОВАТЬ ПРОМОКОД</button><p id="pmsg" class="mut"></p><div class="divider"></div><b>🤝 Есть авторский код?</b><p class="author-note">Привязка автора не выдаёт бонус. Автор будет получать комиссию с твоих ставок и открытий кейсов.</p><button id="openAuthorBind" type="button">ПРИВЯЗАТЬ АВТОРСКИЙ КОД</button><button id="pclose">Закрыть</button></div></div>
+<div id="authorBind" hidden><div class="lcard"><b>🤝 Привязка авторского кода</b><input id="authorBindCode" maxlength="32" placeholder="Введи авторский код" autocomplete="off" autocapitalize="characters"><button id="authorBindSubmit" class="big">ПРИВЯЗАТЬ КОД</button><p id="authorBindMessage" class="mut" role="status"></p><p class="author-note">Код можно привязать только один раз. После привязки изменить автора нельзя.</p><button id="authorBindClose" type="button">Закрыть</button></div></div>
 <div id="toast"></div>
 <div id="mega"><div class="rays"></div><div class="orb"></div><i class="ring"></i><i class="ring b"></i><i class="ring c"></i><div class="shine"></div><div class="frame"></div><canvas id="mfx"></canvas><div class="in"><div id="mtxt"></div><div id="msub"></div><div id="mamt"><span id="mnum"></span><span class="cu">🍬</span></div><button id="mclose">ЗАБРАТЬ 🍬</button></div></div>
 <canvas id="fx"></canvas>
@@ -1432,6 +1482,10 @@ const PR={
  SHMASYA:{run:()=>{const a=Math.round((10000+Math.pow(rnd(),3)*767777)/10)*10;setBal(a);celebrate(a,a);return 'Шмася-лотерея! +'+fmt(a)+' 🍬'}}
 };
 $('#pbtn').onclick=()=>{$('#pmsg').textContent='';$('#promo').hidden=false;$('#pin').focus()};$('#pclose').onclick=()=>$('#promo').hidden=true;
+$('#openAuthorBind').onclick=()=>{if(!authUser){$('#pmsg').textContent='Для привязки авторского кода войди в облачный аккаунт.';return}$('#promo').hidden=true;$('#authorBindMessage').textContent='';$('#authorBind').hidden=false;$('#authorBindCode').focus()};
+$('#authorBindClose').onclick=()=>$('#authorBind').hidden=true;
+async function submitAuthorBinding(){ac();const code=$('#authorBindCode').value.trim().toUpperCase(),msg=$('#authorBindMessage');if(!code)return;if(!authUser){msg.textContent='❌ Сначала войди в облачный аккаунт.';return}const btn=$('#authorBindSubmit');btn.disabled=true;msg.textContent='Проверяю код…';try{const result=await cloudRpc('fantik_bind_author_code',{p_code:code});msg.textContent='✅ Авторский код привязан. '+(result.display_name?'Автор: '+result.display_name:'');$('#authorBindCode').value='';}catch(e){msg.textContent='❌ '+e.message;}finally{btn.disabled=false;}}
+$('#authorBindSubmit').onclick=submitAuthorBinding;$('#authorBindCode').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuthorBinding()});
 $('#pgo').onclick=async()=>{ac();const c=$('#pin').value.trim().toUpperCase(),m=$('#pmsg');if(!c)return;if(c==='HODILDABRODILDA'){m.textContent='ℹ️ Этот код заменён. Используй BRODILDA.';return}if(authUser){try{const result=await cloudRpc('fantik_redeem_promo',{p_code:c,p_request_id:crypto.randomUUID()});await refreshEconomy();const names=(result.items||[]).map(x=>x.item_name).join(', ');let message;if(result.reward_type==='pandora_items')message='Заказ доставлен: '+names;else if(result.reward_type==='grandma_boost')message='Бонус +'+fmt(result.reward_amount)+' 🍬. Бабушка скоро появится!';else message='Бонус +'+fmt(result.reward_amount)+' 🍬';m.textContent='✅ '+message;$('#pin').value='';recordAction('promo','Активирован промокод '+c,Number(result.reward_amount)||0);addXP(10);if(result.reward_type==='lottery')celebrate(Number(result.reward_amount)||0,Number(result.reward_amount)||0);else coin();save()}catch(e){m.textContent='❌ '+e.message}return}if(!PR[c]){m.textContent='❌ Нет такого кода';lose();return}if(ACC.promos.includes(c)){m.textContent='⚠️ Этот код уже активирован на твоём аккаунте';return}ACC.promos.push(c);const result=PR[c].run();m.textContent='✅ '+result;$('#pin').value='';recordAction('promo','Активирован промокод '+c);addXP(10);save()};$('#pin').addEventListener('keydown',e=>{if(e.key==='Enter')$('#pgo').click()});
 
 
@@ -1448,7 +1502,71 @@ function resetAdminCaseForm(){ $('#adminCaseForm').reset();$('#adminCaseId').val
 function editAdminCase(row){$('#adminCaseId').value=row.case_id;$('#adminCaseName').value=row.case_name||'';$('#adminCasePrice').value=row.base_price||500;$('#adminCaseEmoji').value=row.case_emoji||'📦';$('#adminCaseRarity').value=row.case_rarity||'ОБЫЧНЫЙ';$('#adminCaseSkin').value=row.case_skin||'retro';$('#adminCaseDesc').value=row.case_description||'';$('#adminCaseCollection').value=row.collection_id||'';$('#adminCaseImageUrl').value=row.case_image_url||'';const im=$('#adminCaseImagePreview');im.src=row.case_image_url||'';im.hidden=!row.case_image_url;$('#adminCaseImage').value='';$('#adminCaseFormTitle').textContent='✏️ Редактирование кейса';$('#adminCaseSubmit').textContent='СОХРАНИТЬ ИЗМЕНЕНИЯ';$('#adminCaseCancel').hidden=false;setAdminCaseItems(row.items||[]);$('#adminCaseForm').scrollIntoView({behavior:'smooth',block:'start'});}
 async function uploadAdminImage(inputId,pathPrefix){const file=$(inputId).files?.[0];if(!file)return null;if(!IS_ADMIN)throw new Error('Нет прав администратора');if(file.size>5*1024*1024)throw new Error('Изображение больше 5 МБ');if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error('Поддерживаются PNG, JPG, WEBP и GIF');const ext=({ 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'})[file.type];const path=`${pathPrefix}/${authUser.id}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;const {error}=await sb.storage.from('fantik-case-art').upload(path,file,{upsert:true,contentType:file.type});if(error)throw new Error(error.message);return sb.storage.from('fantik-case-art').getPublicUrl(path).data.publicUrl;}
 async function refreshAdminCollections(){if(!IS_ADMIN)return;const el=$('#adminCollectionList');el.innerHTML='<p class="mut">Загружаю коллекции…</p>';try{ADMIN_COLLECTIONS=await cloudRpc('fantik_admin_list_case_collections',{})||[];$('#adminCaseCollection').innerHTML='<option value="">Без коллекции</option>'+ADMIN_COLLECTIONS.filter(x=>x.is_enabled!==false).map(x=>`<option value="${x.collection_id}">${escHtml(x.collection_name)}</option>`).join('');if(!ADMIN_COLLECTIONS.length){el.innerHTML='<p class="mut">Коллекций пока нет. Создай первую ниже.</p>';return}el.innerHTML=ADMIN_COLLECTIONS.map(x=>`<div class="admin-collection-row">${x.cover_image_url?`<img src="${escHtml(x.cover_image_url)}" alt="">`:'<span>🗃️</span>'}<div><strong>${escHtml(x.collection_name)}</strong><small>${(x.case_ids||[]).length} кейсов · порядок ${Number(x.sort_order)||0}</small><small>${escHtml(x.collection_description||'')}</small></div><div class="admin-case-actions"><button type="button" data-collection-edit="${x.collection_id}">Изменить</button><button type="button" class="off" data-collection-delete="${x.collection_id}">Удалить</button></div></div>`).join('');}catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}}
-async function renderAdmin(){if(!IS_ADMIN){toast('Администраторский доступ не подтверждён сервером.');return}$('#admin').hidden=false;$('#adminPromoStatus').textContent='';$('#adminCaseStatus').textContent='';try{const [items]=await Promise.all([cloudRpc('fantik_admin_list_items',{}),refreshAdminPromos(),refreshAdminCases(),refreshAdminCollections()]);ADMIN_ITEMS=Array.isArray(items)?items:[];renderAdminItemPicker();}catch(e){toast('Не удалось загрузить админ-панель: '+e.message)}}
+let ADMIN_AUTHORS=[],ADMIN_SELECTED_AUTHOR=null,ADMIN_PAYOUT_PENDING=null;
+const authorNum=v=>fmt(Math.max(0,Number(v)||0));
+function authorById(id){return ADMIN_AUTHORS.find(x=>String(x.author_id)===String(id))||null;}
+function updateAuthorSelects(){
+ const options='<option value="">Выбери автора</option>'+ADMIN_AUTHORS.map(a=>`<option value="${escHtml(a.author_id)}">${escHtml(a.display_name||a.author_id)}</option>`).join('');
+ $('#adminAuthorCodeOwner').innerHTML=options;
+ $('#adminPayoutAuthor').innerHTML=options;
+}
+async function refreshAdminAuthors(){
+ if(!IS_ADMIN)return;
+ const el=$('#adminAuthorList');el.innerHTML='<p class="mut">Загружаю авторов…</p>';
+ try{
+  const rows=await cloudRpc('fantik_admin_list_authors',{});ADMIN_AUTHORS=Array.isArray(rows)?rows:[];updateAuthorSelects();
+  if(!ADMIN_AUTHORS.length){el.innerHTML='<p class="mut">Авторов пока нет. Добавь автора по UUID аккаунта.</p>';return;}
+  el.innerHTML=ADMIN_AUTHORS.map(a=>{
+   const codes=Array.isArray(a.codes)?a.codes:[];
+   return `<div class="admin-list-row"><div><strong>${escHtml(a.display_name||'Автор')}</strong><small>${escHtml(a.author_id)}</small><small>Игроков: ${authorNum(a.referrals_count)} · Оборот: ${authorNum(a.stake_total)} 🍬</small><small>Начислено: ${authorNum(a.commission_total)} · Выплачено: ${authorNum(a.paid_total)} · Доступно: <b>${authorNum(a.available_total)} 🍬</b></small><div class="author-code-list">${codes.map(c=>`<span class="author-code-pill ${c.enabled?'':'off'}">${escHtml(c.code)}</span>`).join('')||'<small>Кодов пока нет</small>'}</div></div><div class="admin-case-actions"><button type="button" data-author-select="${escHtml(a.author_id)}">История</button><button type="button" class="${a.is_enabled?'':'off'}" data-author-toggle="${escHtml(a.author_id)}" data-enabled="${a.is_enabled?'false':'true'}">${a.is_enabled?'Отключить':'Включить'}</button>${codes.map(c=>`<button type="button" class="${c.enabled?'':'off'}" data-author-code-toggle="${escHtml(c.code)}" data-enabled="${c.enabled?'false':'true'}">${c.enabled?'Выкл.':'Вкл.'} ${escHtml(c.code)}</button>`).join('')}</div></div>`;
+  }).join('');
+  if(ADMIN_SELECTED_AUTHOR){const a=authorById(ADMIN_SELECTED_AUTHOR);if(a)await loadAdminAuthorHistory(a.author_id);else ADMIN_SELECTED_AUTHOR=null;}
+ }catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`;}
+}
+async function loadAdminAuthorHistory(authorId){
+ if(!IS_ADMIN)return;ADMIN_SELECTED_AUTHOR=authorId;const a=authorById(authorId);$('#adminAuthorDetailsTitle').textContent='📜 История: '+(a?.display_name||authorId);
+ $('#adminAuthorCommissionList').innerHTML='<p class="mut">Загружаю начисления…</p>';
+ $('#adminAuthorPayoutList').innerHTML='<p class="mut">Загружаю выплаты…</p>';
+ try{
+  const [commissions,payouts]=await Promise.all([
+   cloudRpc('fantik_admin_author_commissions',{p_author_id:authorId,p_limit:100}),
+   cloudRpc('fantik_admin_author_payouts',{p_author_id:authorId,p_limit:100})
+  ]);
+  const cr=Array.isArray(commissions)?commissions:[];
+  $('#adminAuthorCommissionList').innerHTML=cr.length?cr.map(x=>`<div class="author-history-row"><div><b>${escHtml(x.source_type||'Операция')}</b><small>Игрок: ${escHtml(x.username||x.user_name||x.user_id||'—')} · Источник: ${escHtml(x.source_id||'—')}</small><small>${x.created_at?new Date(x.created_at).toLocaleString('ru-RU'):'Дата неизвестна'}</small></div><div><b>+${authorNum(x.commission_amount)} 🍬</b><small>Ставка/расход: ${authorNum(x.stake_amount)} 🍬</small></div></div>`).join(''):'<p class="mut">Начислений пока нет.</p>';
+  const pr=Array.isArray(payouts)?payouts:[];
+  $('#adminAuthorPayoutList').innerHTML=pr.length?pr.map(x=>`<div class="author-history-row"><div><b>Выплата автору</b><small>Администратор: ${escHtml(x.admin_name||x.admin_id||'—')}</small><small>${x.created_at?new Date(x.created_at).toLocaleString('ru-RU'):'Дата неизвестна'} · ID: ${escHtml(x.payout_id||'—')}</small></div><div><b>${authorNum(x.amount)} 🍬</b></div></div>`).join(''):'<p class="mut">Выплат пока нет.</p>';
+ }catch(e){$('#adminAuthorCommissionList').innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`;$('#adminAuthorPayoutList').innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`;}
+}
+$('#adminAuthorForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!IS_ADMIN)return;const st=$('#adminAuthorStatus'),id=$('#adminAuthorId').value.trim(),name=$('#adminAuthorName').value.trim();st.textContent='Добавляю автора…';
+ try{const r=await cloudRpc('fantik_admin_create_author',{p_author_id:id,p_display_name:name});st.textContent='✅ Автор добавлен: '+(r.display_name||name);$('#adminAuthorId').value='';$('#adminAuthorName').value='';await refreshAdminAuthors();}
+ catch(err){st.textContent='❌ '+err.message;}
+});
+$('#adminAuthorCodeForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!IS_ADMIN)return;const st=$('#adminAuthorCodeStatus'),authorId=$('#adminAuthorCodeOwner').value,code=$('#adminAuthorCode').value.trim().toUpperCase();if(!authorId){st.textContent='Сначала выбери автора.';return;}st.textContent='Создаю авторский код…';
+ try{await cloudRpc('fantik_admin_create_author_code',{p_author_id:authorId,p_code:code});st.textContent='✅ Авторский код '+code+' создан.';$('#adminAuthorCode').value='';await refreshAdminAuthors();}
+ catch(err){st.textContent='❌ '+err.message;}
+});
+$('#adminAuthorList').addEventListener('click',async e=>{
+ if(!IS_ADMIN)return;const select=e.target.closest('[data-author-select]'),toggle=e.target.closest('[data-author-toggle]'),codeToggle=e.target.closest('[data-author-code-toggle]');
+ try{
+  if(select){await loadAdminAuthorHistory(select.dataset.authorSelect);}
+  else if(toggle){await cloudRpc('fantik_admin_set_author_enabled',{p_author_id:toggle.dataset.authorToggle,p_enabled:toggle.dataset.enabled==='true'});await refreshAdminAuthors();toast('Статус автора обновлён');}
+  else if(codeToggle){await cloudRpc('fantik_admin_set_author_code_enabled',{p_code:codeToggle.dataset.authorCodeToggle,p_enabled:codeToggle.dataset.enabled==='true'});await refreshAdminAuthors();toast('Статус авторского кода обновлён');}
+ }catch(err){toast('Ошибка: '+err.message);}
+});
+$('#adminPayoutSubmit').addEventListener('click',async()=>{
+ if(!IS_ADMIN)return;const st=$('#adminPayoutStatus');
+ if(!ADMIN_PAYOUT_PENDING){const authorId=$('#adminPayoutAuthor').value,amount=Number($('#adminPayoutAmount').value);if(!authorId||!Number.isSafeInteger(amount)||amount<=0){st.textContent='Выбери автора и укажи целую сумму больше нуля.';return;}const a=authorById(authorId);if(!confirm(`Перечислить ${fmt(amount)} 🍬 автору «${a?.display_name||authorId}»?`))return;ADMIN_PAYOUT_PENDING={authorId,amount,requestId:crypto.randomUUID()};}
+ const pending=ADMIN_PAYOUT_PENDING,btn=$('#adminPayoutSubmit');btn.disabled=true;st.textContent='Выполняю выплату на сервере…';
+ try{const result=await cloudRpc('fantik_admin_pay_author',{p_author_id:pending.authorId,p_amount:pending.amount,p_request_id:pending.requestId});st.textContent=(result.already_processed?'ℹ️ Эта выплата уже была обработана.':'✅ Выплата выполнена.')+' Зачислено: '+fmt(Number(result.amount)||pending.amount)+' 🍬';ADMIN_PAYOUT_PENDING=null;$('#adminPayoutAmount').value='';await refreshAdminAuthors();await loadAdminAuthorHistory(pending.authorId);}
+ catch(err){st.textContent='❌ '+err.message+' Повтори эту же операцию кнопкой — будут использованы прежние параметры и тот же ID, чтобы не создать повторную выплату.';}
+ finally{btn.disabled=false;}
+});
+$('#adminRefreshAuthors').onclick=refreshAdminAuthors;
+
+async function renderAdmin(){if(!IS_ADMIN){toast('Администраторский доступ не подтверждён сервером.');return}$('#admin').hidden=false;$('#adminPromoStatus').textContent='';$('#adminCaseStatus').textContent='';try{const [items]=await Promise.all([cloudRpc('fantik_admin_list_items',{}),refreshAdminPromos(),refreshAdminCases(),refreshAdminCollections(),refreshAdminAuthors()]);ADMIN_ITEMS=Array.isArray(items)?items:[];renderAdminItemPicker();}catch(e){toast('Не удалось загрузить админ-панель: '+e.message)}}
 $('#adminPromoForm').addEventListener('submit',async e=>{e.preventDefault();if(!IS_ADMIN)return;const code=$('#adminPromoCode').value.trim().toUpperCase(),type=$('#adminPromoType').value,amount=Number($('#adminPromoAmount').value)||0,status=$('#adminPromoStatus');status.textContent='Создаю промокод…';try{const result=await cloudRpc('fantik_admin_create_promo',{p_code:code,p_reward_type:type,p_reward_amount:amount});status.textContent='✅ Промокод '+result.code+' создан.';$('#adminPromoCode').value='';await refreshAdminPromos();}catch(err){status.textContent='❌ '+err.message}});
 $('#adminPromoList').addEventListener('click',async e=>{const b=e.target.closest('[data-admin-promo]');if(!b||!IS_ADMIN)return;try{await cloudRpc('fantik_admin_set_promo_enabled',{p_code:b.dataset.adminPromo,p_enabled:b.dataset.enabled==='true'});await refreshAdminPromos();toast('Статус промокода обновлён');}catch(err){toast('Не удалось изменить промокод: '+err.message)}});
 $('#adminRefreshPromos').onclick=refreshAdminPromos;$('#adminRefreshCases').onclick=refreshAdminCases;$('#adminRefreshCollections').onclick=refreshAdminCollections;
