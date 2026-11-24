@@ -1029,18 +1029,38 @@ const roll=k=>{let x=rnd()*k.W;for(const c of k.it){x-=c.w;if(x<=0)return c}retu
 async function loadCustomCases(){
  if(!authUser||!sb)return;
  try{
-  const rows=await cloudRpc('fantik_get_custom_cases',{});
-  const custom=(Array.isArray(rows)?rows:[]).map((row,index)=>{
+  const rows=await cloudRpc('fantik_get_case_catalog',{});
+  const baseById=new Map(BASE_CS.map(x=>[x.id,x]));
+  const catalog=(Array.isArray(rows)?rows:[]).map((row,index)=>{
+   const base=baseById.get(row.case_id)||{};
    const it=(row.items||[]).map(x=>{
     const local=CD.find(c=>c.id===x.item_id);
     return {...(local||{id:x.item_id,n:x.item_name,e:x.item_emoji||'🍬',t:'',rub:Math.round(Number(x.item_value)/10),r:5}),id:x.item_id,n:x.item_name,e:x.item_emoji||local?.e||'🍬',p:Number(x.item_value),w:Number(x.weight)};
    }).filter(x=>x.p>0&&x.w>0);
    const W=it.reduce((sum,x)=>sum+x.w,0);
    if(!it.length||!W)return null;
-   return {id:row.case_id,n:row.case_name,e:row.case_emoji||'📦',rarity:row.case_rarity||'ОБЫЧНЫЙ',skin:row.case_skin||'retro',description:row.case_description||'',imageUrl:row.case_image_url||'',collectionId:row.collection_id||'',collectionName:row.collection_name||'',collectionCover:row.collection_cover_url||'',serial:String(BASE_CS.length+index+1).padStart(2,'0'),it,W,pr:Number(row.base_price),custom:true};
+   return {...base,id:row.case_id,n:row.case_name,e:row.case_emoji||base.e||'📦',
+    rarity:row.case_rarity||base.rarity||'ОБЫЧНЫЙ',skin:row.case_skin||base.skin||'retro',
+    description:row.case_description||'',imageUrl:row.case_image_url||'',
+    collectionId:row.collection_id||'',collectionName:row.collection_name||'',
+    collectionDescription:row.collection_description||'',collectionCover:row.collection_cover_url||'',
+    serial:base.serial||String(index+1).padStart(2,'0'),it,W,pr:Number(row.base_price),
+    custom:!!row.is_custom};
   }).filter(Boolean);
-  CS=[...BASE_CS,...custom];rCases();
- }catch(e){console.warn('Custom case catalog unavailable:',e.message);CS=[...BASE_CS];rCases();}
+  CS=catalog;rCases();
+ }catch(e){
+  console.warn('Case catalog unavailable:',e.message);
+  try{
+   const rows=await cloudRpc('fantik_get_custom_cases',{});
+   const custom=(Array.isArray(rows)?rows:[]).map((row,index)=>{
+    const it=(row.items||[]).map(x=>{const local=CD.find(c=>c.id===x.item_id);return {...(local||{id:x.item_id,n:x.item_name,e:x.item_emoji||'🍬',t:'',rub:Math.round(Number(x.item_value)/10),r:5}),id:x.item_id,n:x.item_name,e:x.item_emoji||local?.e||'🍬',p:Number(x.item_value),w:Number(x.weight)}}).filter(x=>x.p>0&&x.w>0);
+    const W=it.reduce((sum,x)=>sum+x.w,0);if(!it.length||!W)return null;
+    return {id:row.case_id,n:row.case_name,e:row.case_emoji||'📦',rarity:row.case_rarity||'ОБЫЧНЫЙ',skin:row.case_skin||'retro',description:row.case_description||'',imageUrl:row.case_image_url||'',collectionId:row.collection_id||'',collectionName:row.collection_name||'',collectionDescription:row.collection_description||'',collectionCover:row.collection_cover_url||'',serial:String(BASE_CS.length+index+1).padStart(2,'0'),it,W,pr:Number(row.base_price),custom:true};
+   }).filter(Boolean);
+   CS=[...BASE_CS,...custom];
+  }catch(fallbackError){console.warn('Legacy case catalog unavailable:',fallbackError.message);CS=[...BASE_CS];}
+  rCases();
+ }
 }
 
 let INV=[],uid=0,CUR=null,cbusy=false,ubusy=false,TG=null,pendingCaseItem=null;const SEL=new Set(),USEL=new Set();
@@ -1051,7 +1071,7 @@ function caseArtMarkup(k){const image=k.imageUrl||(k.staticIndex!==undefined?CAS
 function rCases(){
   let lastCollection='';let cards='';
   CS.forEach((k,i)=>{
-    if(k.custom&&k.collectionId&&k.collectionId!==lastCollection){cards+=`<div class="cases-heading collection-cases-heading"><div>${k.collectionCover?`<img src="${escHtml(k.collectionCover)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:10px;float:left;margin:0 10px 6px 0">`:''}<span class="cases-kicker">КОЛЛЕКЦИЯ КЕЙСОВ</span><h2>${escHtml(k.collectionName||'Коллекция')}</h2><p>${escHtml(k.description||'Подборка авторских кейсов')}</p></div></div>`;lastCollection=k.collectionId;}
+    if(k.collectionId&&k.collectionId!==lastCollection){cards+=`<div class="cases-heading collection-cases-heading"><div>${k.collectionCover?`<img src="${escHtml(k.collectionCover)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:10px;float:left;margin:0 10px 6px 0">`:''}<span class="cases-kicker">КОЛЛЕКЦИЯ КЕЙСОВ</span><h2>${escHtml(k.collectionName||'Коллекция')}</h2><p>${escHtml(k.collectionDescription||'Подборка кейсов')}</p></div></div>`;lastCollection=k.collectionId;}
     cards+=`<button class="cs" data-i="${i}" data-skin="${escHtml(k.skin)}"><span class="case-art ${k.custom?'custom-case-art':''}">${caseArtMarkup(k)}</span><b>${escHtml(k.n)}</b><small class="rarity">${escHtml(k.rarity)}</small><small class="case-serial">КЕЙС · ${escHtml(k.serial)}</small><span class="case-price"><b>🍬 ${fmt(casePrice(k))}</b><small>${rubLabel(casePrice(k))}</small></span></button>`;
   });
   $('#cgrid').innerHTML=`<div class="cases-heading"><div><span class="cases-kicker">ФАНТИК-КАЗИНО · КОЛЛЕКЦИЯ</span><h2>ВЫБЕРИ СВОЙ КЕЙС</h2><p>У каждого кейса — свой набор предметов и шанс на редкую находку.</p></div><span class="cases-count">${CS.length} КЕЙСОВ</span></div>`+cards;
@@ -1421,7 +1441,7 @@ const ADMIN_SKINS=['retro','usa','acid','choco','lollipop','gummy','vhs','premiu
 function setAdminVisibility(){const b=$('#adminTab');if(b)b.hidden=!IS_ADMIN;if(!IS_ADMIN&&$('#admin')&&!$('#admin').hidden){$('#admin').hidden=true;$('#profile').hidden=false;}}
 async function refreshAdminAccess(){IS_ADMIN=false;setAdminVisibility();if(!authUser)return;try{const r=await cloudRpc('fantik_admin_status',{});IS_ADMIN=!!r?.is_admin;setAdminVisibility();}catch(e){console.warn('Admin access check:',e.message)}}
 async function refreshAdminPromos(){if(!IS_ADMIN)return;const el=$('#adminPromoList');el.innerHTML='<p class="mut">Загружаю промокоды…</p>';try{const rows=await cloudRpc('fantik_admin_list_promos',{});if(!rows?.length){el.innerHTML='<p class="mut">Промокодов пока нет.</p>';return}el.innerHTML=rows.map(x=>`<div class="admin-list-row"><div><strong>${escHtml(x.code)}</strong><small>${escHtml(x.reward_type)} · ${fmt(Number(x.reward_amount)||0)} 🍬</small></div><button class="${x.enabled?'':'off'}" data-admin-promo="${escHtml(x.code)}" data-enabled="${x.enabled?'false':'true'}">${x.enabled?'Отключить':'Включить'}</button></div>`).join('');}catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}}
-async function refreshAdminCases(){if(!IS_ADMIN)return;const el=$('#adminCaseList');el.innerHTML='<p class="mut">Загружаю кейсы…</p>';try{const rows=await cloudRpc('fantik_admin_list_cases',{});if(!rows?.length){el.innerHTML='<p class="mut">Собственных кейсов пока нет.</p>';return}el.innerHTML=rows.map(x=>`<div class="admin-list-row"><div><strong>${escHtml(x.case_emoji||'📦')} ${escHtml(x.case_name)}</strong><small>${fmt(Number(x.base_price)||0)} 🍬 · ${(x.items||[]).length} предметов · ${escHtml(x.case_rarity||'ОБЫЧНЫЙ')} · ${x.is_enabled?'В игре':'Скрыт'}</small></div><div class="admin-case-actions"><button type="button" data-case-edit="${escHtml(x.case_id)}">Изменить</button><button type="button" data-case-duplicate="${escHtml(x.case_id)}">Дубль</button><button type="button" class="off" data-case-delete="${escHtml(x.case_id)}">Удалить</button></div></div>`).join('');}catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}}
+async function refreshAdminCases(){if(!IS_ADMIN)return;const el=$('#adminCaseList');el.innerHTML='<p class="mut">Загружаю кейсы…</p>';try{const rows=await cloudRpc('fantik_admin_list_cases',{});if(!rows?.length){el.innerHTML='<p class="mut">Кейсов пока нет.</p>';return}el.innerHTML=rows.map(x=>`<div class="admin-list-row"><div><strong>${escHtml(x.case_emoji||'📦')} ${escHtml(x.case_name)}</strong><small>${x.is_custom?'Собственный':'Стандартный'} · ${fmt(Number(x.base_price)||0)} 🍬 · ${(x.items||[]).length} предметов · ${escHtml(x.case_rarity||'ОБЫЧНЫЙ')} · ${x.is_enabled?'В игре':'Скрыт'}</small></div><div class="admin-case-actions"><button type="button" data-case-edit="${escHtml(x.case_id)}">Изменить</button><button type="button" data-case-duplicate="${escHtml(x.case_id)}">Дубль</button>${x.is_custom?`<button type="button" class="off" data-case-delete="${escHtml(x.case_id)}">Удалить</button>`:''}</div></div>`).join('');}catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}}
 function renderAdminItemPicker(){const el=$('#adminItemPicker');if(!el)return;const q=($('#adminItemSearch')?.value||'').trim().toLocaleLowerCase('ru');const rows=ADMIN_ITEMS.filter(x=>(x.item_name+' '+x.item_id).toLocaleLowerCase('ru').includes(q));el.innerHTML=rows.map(x=>{const v=ADMIN_EDIT_ITEMS.get(x.item_id);return `<label class="admin-item-row"><input type="checkbox" data-admin-pick="${escHtml(x.item_id)}" ${v?'checked':''}><span>${escHtml(x.item_emoji||'🍬')}</span><span class="admin-item-name" title="${escHtml(x.item_name)}">${escHtml(x.item_name)}<small class="admin-item-value"> · ${fmt(Number(x.item_value))} 🍬</small></span><input type="number" min="0.001" max="1000000" step="0.001" value="${v?Number(v.weight):1}" data-admin-weight="${escHtml(x.item_id)}" aria-label="Вес ${escHtml(x.item_name)}"></label>`}).join('')||'<p class="mut">Ничего не найдено.</p>';}
 function setAdminCaseItems(items){ADMIN_EDIT_ITEMS=new Map((items||[]).map(x=>[x.item_id,{weight:Number(x.weight)||1}]));renderAdminItemPicker();}
 function resetAdminCaseForm(){ $('#adminCaseForm').reset();$('#adminCaseId').value='';$('#adminCaseName').value='';$('#adminCasePrice').value='500';$('#adminCaseEmoji').value='📦';$('#adminCaseDesc').value='';$('#adminCaseCollection').value='';$('#adminCaseImageUrl').value='';$('#adminCaseImage').value='';$('#adminCaseImagePreview').hidden=true;$('#adminCaseFormTitle').textContent='📦 Добавить новый кейс';$('#adminCaseSubmit').textContent='СОЗДАТЬ КЕЙС';$('#adminCaseCancel').hidden=true;ADMIN_EDIT_ITEMS=new Map();renderAdminItemPicker();}
