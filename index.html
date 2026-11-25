@@ -110,6 +110,7 @@ label{min-width:0}h3,h4{overflow-wrap:anywhere}#rmsg{font-size:13px;line-height:
 /* — живой сайт: боты — */
 .onl{font-size:13px;color:#7dff9f;background:var(--card);padding:6px 10px;border-radius:20px;white-space:nowrap}
 #feed{display:grid;gap:4px;padding:0 14px 10px}
+#localCasinoNote{margin:0 14px 10px;padding:9px 12px;border:1px solid #b8860b;border-radius:10px;background:#3b2a7a;color:#ffe9a6;font-size:12px;line-height:1.35}
 .fe{--rc:#9aa0b8;font-size:12px;padding:5px 10px;border-radius:8px;background:var(--card);border-left:4px solid var(--rc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:fin .4s}
 .fe.t1{--rc:#4b8dff}.fe.t2{--rc:#a24bff}.fe.t3{--rc:#ff4bd2}.fe.t4{--rc:#ffc933}
 @keyframes fin{from{opacity:0;transform:translateY(-6px)}}
@@ -699,11 +700,12 @@ header>.bal{grid-area:balance;white-space:nowrap}
 <div class="header-actions"><button id="gran">👵 подарок +10 000</button><button id="me"></button></div></header>
 <div id="eventbar" hidden><div><b id="eventTitle">🎉 Событие</b><small id="eventDesc"></small></div><div class="event-clock"><span id="eventTimer"></span><button id="eventClaim" disabled>Забрать</button></div></div>
 <nav><button class="tab on" data-t="rocket">🚀 Ракета</button><button class="tab" data-t="double">🎲 Дабл</button><button class="tab" data-t="cases">📦 Кейсы</button><button class="tab" data-t="up">⬆️ Развитие</button><button class="tab" data-t="inv">🎒 Склад</button><button class="tab" data-t="shop">🛍️ Магазин</button><button class="tab" data-t="profile">👤 Профиль</button><button class="tab" id="adminTab" data-t="admin" title="Доступно только подтверждённому администратору Supabase" hidden>👑 Админ-панель</button><button class="tab" data-t="about">ℹ️ О проекте</button><button id="mute">🔊</button></nav>
+<div id="localCasinoNote" role="note">⚠️ ТЕСТОВЫЙ РЕЖИМ: автоматические раунды рассчитываются в этом браузере. Они не синхронизированы между устройствами; тестовые изменения баланса не записываются в облачную экономику.</div>
 <aside id="feed" aria-label="Лента активности игроков"><div class="feed-head"><b>ОТКРЫТИЯ ИГРОКОВ</b></div><div id="feedList"></div></aside>
 <main>
 <section id="rocket">
  <div class="stage" id="stage"><canvas id="rc"></canvas><div id="mult">1.00x</div><div id="rmsg">Поставь фантики и взлетай!</div></div>
- <div class="hist" id="rhist"></div>
+ <div class="hist" id="rhist"></div><div class="mut" id="rphase">Ожидание запуска…</div>
  <div class="ctl">
   <label>Ставка, фантики<input class="bet" type="number" value="100" min="1" inputmode="numeric"></label>
   <label>Авто-вывод на x (необязательно)<input id="rauto" type="number" step="0.1" min="1.01" placeholder="например 2.5" inputmode="decimal"></label>
@@ -714,7 +716,7 @@ header>.bal{grid-area:balance;white-space:nowrap}
 </section>
 <section id="double" hidden>
  <div class="wheel"><div id="strip"></div><i class="mark"></i><div id="dmult" hidden></div></div>
- <div class="hist" id="dhist"></div>
+ <div class="hist" id="dhist"></div><div class="mut" id="dphase">Ожидание запуска…</div>
  <div class="ctl">
   <label>Ставка, фантики<input class="bet" type="number" value="100" min="1" inputmode="numeric"></label>
   <div class="q"><button data-m=".5">½</button><button data-m="2">×2</button><button data-m="max">MAX</button></div>
@@ -1014,6 +1016,11 @@ $("#gran").onclick=()=>claimGrandma();
 /* ---------- rocket ---------- */
 const rc=$("#rc"),dpr=Math.min(1.5,devicePixelRatio||1);
 const MAX_ROCKET_MULTIPLIER=1000,MAX_ROCKET_TIME=Math.log(MAX_ROCKET_MULTIPLIER)/.15;
+const AUTO_CASINO_MODE=true;
+function paintLocalBalance(){$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal)}
+function changeLocalBalance(delta){bal=Math.max(0,Math.floor(bal+delta));paintLocalBalance();if(!authUser&&typeof ME!=='undefined'&&ME)queueSave();}
+const AUTO_ROCKET={phase:'betting',endsAt:0,queuedBet:0,started:false};
+const AUTO_DOUBLE={phase:'betting',endsAt:0,started:false};
 const R={on:false,bet:0,cashed:false,crash:1,m:1,t:0,auto:0,t0:0,serverRoundId:null,serverT:0,serverSyncMono:0,pollBusy:false,lastPoll:0,lastServerSync:0,pollDelay:1000,syncStale:false,settled:false,cashPending:false,rafId:0,lastPaint:0,lastBotTick:0,lastDrawKey:''};
 function rsz(){rc.width=Math.max(1,Math.floor(rc.clientWidth*dpr));rc.height=Math.max(1,Math.floor(rc.clientHeight*dpr))}
 function rdraw(){rsz();draw(R.t,R.m,!R.on&&R.m>1&&R.crash==R.m)}
@@ -1071,8 +1078,8 @@ document.addEventListener('visibilitychange',()=>{
  else if(R.on){R.lastPoll=0;startRocketLoop();if(authUser&&R.serverRoundId)pollCloudRocket()}
 });
 async function cash(m){
- if(authUser){
-  if(!R.serverRoundId||R.cashed||R.cashPending)return;
+ if(authUser&&R.serverRoundId){
+  if(R.cashed||R.cashPending)return;
   R.cashPending=true;
   const roundId=R.serverRoundId;
   try{
@@ -1096,7 +1103,7 @@ async function cash(m){
   finally{R.cashPending=false;}
  }
  m=Math.max(1,Math.min(Number(R.crash)||1,Math.floor(m*100)/100));
- const pay=Math.floor(R.bet*m);R.cashed=true;setBal(pay);ACC.pendingRocket=null;ACC.stats=ACC.stats||{};
+ const pay=Math.floor(R.bet*m);R.cashed=true;if(AUTO_CASINO_MODE&&authUser)changeLocalBalance(pay);else setBal(pay);ACC.pendingRocket=null;ACC.stats=ACC.stats||{};
  ACC.stats.rocketWins=(ACC.stats.rocketWins||0)+1;recordAction('rocket',`Вывод на ${m.toFixed(2)}x`,pay);addXP(Math.max(5,Math.floor(pay/500)));
  const pr=pay-R.bet;$('#rmsg').textContent='Выведено на '+m.toFixed(2)+'x: '+(pr>=0?'+':'')+fmt(pr);
  $('#rgo').classList.remove('pulse');$('#rgo').disabled=true;$('#rgo').textContent='Смотрим, где упадёт…';celebrate(pay,pr);
@@ -1146,12 +1153,25 @@ function rcrash(){
  botEnd();$('#mult').textContent=R.crash.toFixed(2)+'x';$('#mult').classList.add('dead');draw(R.t,R.m,true);
  const st=$('#stage');st.classList.remove('boom');void st.offsetWidth;st.classList.add('boom');noise(.6,.3);tone(300,.6,'sawtooth',.15,0,40);
  chip('#rhist',R.crash.toFixed(2)+'x',R.crash<2?'lo':R.crash<10?'mid':'hi');
- if(!R.cashed){$('#rmsg').textContent='💥 Улетела на '+R.crash.toFixed(2)+'x. −'+fmt(R.bet)+' 🍬';lose()}
- else $('#rmsg').textContent+=' · упала на '+R.crash.toFixed(2)+'x';
- $('#rgo').classList.remove('pulse');$('#rgo').disabled=false;$('#rgo').textContent='СТАРТ 🚀';
+ if(R.bet>0&&!R.cashed){$('#rmsg').textContent='💥 Улетела на '+R.crash.toFixed(2)+'x. −'+fmt(R.bet)+' 🍬';lose()}
+ else $('#rmsg').textContent='Раунд завершён на '+R.crash.toFixed(2)+'x';
+ $('#rgo').classList.remove('pulse');$('#rgo').disabled=false;$('#rgo').textContent=AUTO_CASINO_MODE?'ПРИЁМ СТАВОК…':'СТАРТ 🚀';
+ if(AUTO_CASINO_MODE){AUTO_ROCKET.phase='intermission';AUTO_ROCKET.endsAt=Date.now()+3500;AUTO_ROCKET.queuedBet=0;}
 }
 $('#rgo').onclick=async()=>{
- ac();if(R.on&&!R.cashed){cash(R.m);return}if(R.on)return;
+ ac();
+ if(AUTO_CASINO_MODE){
+  if(AUTO_ROCKET.phase==='betting'){
+   if(AUTO_ROCKET.queuedBet){toast('Ставка уже принята на следующий раунд');return}
+   const b=getBet('#rocket');if(!b)return;
+   changeLocalBalance(-b);AUTO_ROCKET.queuedBet=b;
+   $('#rgo').textContent='СТАВКА ПРИНЯТА ✓';$('#rmsg').textContent='Ставка '+fmt(b)+' 🍬 принята. Ждём общий старт этого браузера.';
+   return;
+  }
+  if(AUTO_ROCKET.phase==='running'&&R.on&&R.bet>0&&!R.cashed){cash(R.m);return}
+  toast('Приём ставок откроется после завершения раунда');return;
+ }
+ if(R.on&&!R.cashed){cash(R.m);return}if(R.on)return;
  const b=getBet('#rocket');if(!b)return;
  let serverRoundId=null,startedAt=Date.now(),startingBalance=null;
  const crash=authUser?1000:Math.max(1,Math.min(1000,Math.floor(97/(1-rnd()))/100));
@@ -1159,7 +1179,7 @@ $('#rgo').onclick=async()=>{
  else setBal(-b);
  const elapsed=Math.max(0,(Date.now()-startedAt)/1000);
  Object.assign(R,{on:true,bet:b,cashed:false,m:1,t:elapsed,serverT:elapsed,serverSyncMono:performance.now(),crash,auto:+$('#rauto').value||0,t0:performance.now()-elapsed*1000,serverRoundId,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
- if(authUser){bal=startingBalance;$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingRocket=null}else ACC.pendingRocket={bet:b,crash:R.crash,auto:R.auto,startedAt:Date.now()};
+ if(authUser){bal=startingBalance;paintLocalBalance();ACC.pendingRocket=null}else ACC.pendingRocket={bet:b,crash:R.crash,auto:R.auto,startedAt:Date.now()};
  ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;save();
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Ставка '+fmt(b)+' 🍬 — взлетаем!';$('#rgo').classList.add('pulse');
  tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
@@ -1186,25 +1206,24 @@ function settlePendingDouble(round){
  round.rulesVersion=2;
  settleDouble(round,true);
 }
-$$('.col').forEach(btn=>btn.onclick=()=>{ac();if(D.busy)return;const b=getBet('#double');if(!b)return;const staged=Object.values(D.b).reduce((a,v)=>a+v,0);if(authUser&&staged+b>bal){toast('Сумма ставок превышает баланс');return}if(!authUser)setBal(-b);D.b[btn.dataset.c]+=b;ACC.stagedDouble={...D.b};save();upB();tone(660,.06,'square',.1)});
-$('#dclr').onclick=()=>{if(D.busy)return;const refund=Object.values(D.b).reduce((a,b)=>a+b,0);if(!authUser)setBal(refund);D.b={b:0,g:0,y:0};ACC.stagedDouble=null;save();upB()};
-$('#dgo').onclick=async()=>{ac();if(D.busy)return;const total=Object.values(D.b).reduce((a,b)=>a+b,0);if(!total){toast('Сначала поставь на цвет');return}
- D.busy=true;$('#dgo').disabled=true;$('#dgo').textContent='СЕРВЕР ОБРАБАТЫВАЕТ СТАВКУ…';dbStart();let round;
- try{
-   if(authUser){const result=await cloudRpc('fantik_play_double',{p_wagers:{...D.b},p_request_id:crypto.randomUUID()});
-     // Сервер уже зафиксировал раунд, но отображаемый баланс обновляем
-     // только в settleDouble() после завершения анимации.
-     const serverBalance=Number(result.balance);
-     const winning=result.color,n=Number(result.slot),o=ORD.indexOf(n),j=(rnd()-.5)*36;
-     round={id:result.round_id,rulesVersion:2,n,color:winning,multiplier:Number(result.multiplier),wagers:{...D.b},serverBalance};
-   }else{const n=Math.floor(rnd()*12),o0=ORD.indexOf(n),winning=col(n),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1;round={id:'d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:winning,multiplier,wagers:{...D.b}};round._o=o0;}
-   const n=round.n,o=ORD.indexOf(n),j=(rnd()-.5)*36,winning=round.color,multiplier=round.multiplier;
-   D.current=round;ACC.stagedDouble=null;ACC.pendingDouble=null;save();
-   $('#dmult').hidden=true;clearTimeout(dRevealT);if(multiplier>1)dRevealT=setTimeout(()=>{$('#dmult').textContent='✨ СЛУЧАЙНЫЙ МНОЖИТЕЛЬ ×2';$('#dmult').hidden=false;$('#dmult').classList.remove('reveal');void $('#dmult').offsetWidth;$('#dmult').classList.add('reveal');},DOUBLE_CONFIG.revealDelay);
-   $('#dgo').textContent='КРУТИТСЯ…';strip.style.transition='transform 3.2s cubic-bezier(.12,.6,.1,1)';setPos(108+o,j,true);noise(3.2,.07);tone(200,3.2,'sine',.055,0,60);
-   setTimeout(()=>{setPos(12+o,j,false);dbEnd(winning);settleDouble(round,false)},3400);
- }catch(e){D.busy=false;$('#dgo').disabled=false;$('#dgo').textContent='КРУТИТЬ 🎲';toast('Дабл не запущен: '+e.message);if(authUser){try{await refreshEconomy()}catch{}}}
-};
+$$('.col').forEach(btn=>btn.onclick=()=>{ac();if(D.busy)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting'){toast('Ставки закрыты до следующего раунда');return}const b=getBet('#double');if(!b)return;const staged=Object.values(D.b).reduce((a,v)=>a+v,0);if(staged+b>bal){toast('Сумма ставок превышает баланс');return}changeLocalBalance(-b);D.b[btn.dataset.c]+=b;ACC.stagedDouble={...D.b};save();upB();tone(660,.06,'square',.1)});
+$('#dclr').onclick=()=>{if(D.busy)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting')return toast('Ставки уже закрыты');const refund=Object.values(D.b).reduce((a,b)=>a+b,0);changeLocalBalance(refund);D.b={b:0,g:0,y:0};ACC.stagedDouble=null;save();upB()};
+$('#dgo').onclick=()=>{if(AUTO_CASINO_MODE){toast(AUTO_DOUBLE.phase==='betting'?'Раунд запустится автоматически после закрытия ставок':'Дабл работает автоматически');return}};
+function autoDoubleSpin(){
+ const wagers={...D.b},total=Object.values(wagers).reduce((a,b)=>a+b,0);
+ const n=Math.floor(rnd()*12),o=ORD.indexOf(n),winning=col(n),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1,j=(rnd()-.5)*36;
+ const round={id:'local-d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:winning,multiplier,wagers};
+ D.busy=true;D.current=round;AUTO_DOUBLE.phase='running';dbStart();
+ ACC.stagedDouble=null;ACC.pendingDouble=null;save();
+ $('#dphase').textContent='Раунд идёт · ставки закрыты';$('#dgo').disabled=true;$('#dgo').textContent='РАУНД ИДЁТ…';
+ $('#dmult').hidden=true;clearTimeout(dRevealT);if(multiplier>1)dRevealT=setTimeout(()=>{$('#dmult').textContent='✨ СЛУЧАЙНЫЙ МНОЖИТЕЛЬ ×2';$('#dmult').hidden=false;$('#dmult').classList.remove('reveal');void $('#dmult').offsetWidth;$('#dmult').classList.add('reveal');},DOUBLE_CONFIG.revealDelay);
+ strip.style.transition='transform 3.2s cubic-bezier(.12,.6,.1,1)';setPos(108+o,j,true);noise(3.2,.07);tone(200,3.2,'sine',.055,0,60);
+ setTimeout(()=>{
+  setPos(12+o,j,false);dbEnd(winning);
+  if(total>0)settleDouble(round,false);else{D.b={b:0,g:0,y:0};D.busy=false;D.current=null;upB();$('#dmult').hidden=true}
+  AUTO_DOUBLE.phase='intermission';AUTO_DOUBLE.endsAt=Date.now()+2800;$('#dgo').disabled=true;$('#dgo').textContent='СЛЕДУЮЩИЙ РАУНД…';
+ },3400);
+}
 /* ===== конфеты, кейсы, склад, апгрейдер ===== */
 /* название|цена в ₽|оценка|эмодзи|теги (u США, r Россия, s кислые, c шоколад, h леденцы, g жевательные, n ностальгия, o хэллоуин) */
 const CD=`Skittles|110|8|🌈|ug;M&M's|100|8|🔴|uc;Snickers|70|8|🥜|uc;Twix|65|8|🍫|uc;Reese's Cups|180|9|🧡|uc;Hershey's Kisses|250|6|💋|uc;Jolly Rancher|150|7|🍏|uh;Starburst|140|7|⭐|ug;Sour Patch Kids|200|8|👶|usg;Swedish Fish|220|6|🐟|ugo;Nerds|130|7|🧪|us;Twizzlers|180|5|🍓|ug;Tootsie Roll|90|4|🟤|uno;Milk Duds|170|5|🟫|uco;Butterfinger|110|7|🟧|uc;Airheads|60|6|🌀|ugn;Laffy Taffy|55|5|😂|ugn;Pop Rocks|120|7|💥|uso;Candy Corn|200|3|🌽|uo;Peeps|250|4|🐥|ugo;Warheads|140|6|☠️|usho;Dum Dums|20|5|🍭|uhn;Fun Dip|90|5|🥄|usn;Whoppers|160|6|⚪|uco;Junior Mints|130|6|🌿|uco;Jelly Belly|300|9|🫘|ugo;Мишка косолапый|25|9|🐻|rcn;Красная шапочка|30|8|🧒|rcn;Белочка|28|8|🐿️|rcn;Ласточка|25|7|🐦|rc;Каракум|30|7|🏜️|rcn;Коровка|12|7|🐄|rn;Кис-кис|10|6|🐱|rn;Барбарис|8|6|🔴|rshn;Дюшес|8|5|🍐|rhn;Раковая шейка|30|8|🦞|rcn;Чупа-Чупс|20|6|🍭|rhn;Алёнка|110|8|👧|rc;Рот Фронт|450|7|🎁|rc;Рафаэлло|650|9|🥥|rc;Птичье молоко|420|9|🕊️|rc;Зефир в шоколаде|220|8|☁️|rcg;Лимонные дольки|70|7|🍋|rgs;Холодок|15|4|🧊|rh;Коркунов|550|8|💎|rc;Love Is|10|9|💕|rn;Турбо|10|8|🏎️|rn;Золотой ключик|20|7|🔑|rn;Грильяж|15|6|🌰|rc;Бабаевский|120|7|🍫|rc;Макарон «Лавандовый сад»|1800|9|🟣|d;Эклер «Шафран»|4200|10|🟡|d;Пирожное «Красный бархат»|8500|9|🔺|d;Набор макарун «Париж»|16000|10|🌸|d;Торт «Золотой бархат»|42000|10|👑|d;Бенто-торт «Лунный сад»|78000|10|🌙|d;Пирожное «Корона императора»|145000|10|💠|dx;Торт «Королевская коллекция»|280000|10|🏆|dx`.split(';').map(l=>{const[n,b,r,e,t]=l.split('|');return{id:n.toLowerCase().replace(/[^a-zа-я0-9]+/gi,'-').replace(/^-+|-+$/g,''),n,e,t,rub:+b,r:+r,p:Math.round(+b*(.4+r*.25)*4)}});
@@ -1445,13 +1464,50 @@ function botEnd(){RB.forEach(b=>{if(!b.st)b.st=2});RE=Date.now();live($('#rlive'
 function dbStart(){while(DB.length<6){const b=mkBot(DB);b.c=dc();DB.push(b)}DE=0;live($('#dlive'),DB,1)}
 function dbEnd(w){DB.forEach(b=>{if(b.c==w){b.st=1;b.w=b.b*(w=='y'?14:2);if(b.w>=8000)feed(`${b.a} ${b.n} сорвал ${fmt(b.w)} 🍬 в дабле`,b.w)}else b.st=2});DE=Date.now();live($('#dlive'),DB,1)}
 for(let i=0;i<5;i++){RB.push(mkBot(RB));const b=mkBot(DB);b.c=dc();DB.push(b)}
+
+function startAutoCasino(){
+ if(!AUTO_CASINO_MODE||AUTO_ROCKET.started)return;
+ AUTO_ROCKET.started=true;if(R.on&&R.serverRoundId){AUTO_ROCKET.phase='running';AUTO_ROCKET.endsAt=0}else{AUTO_ROCKET.phase='betting';AUTO_ROCKET.endsAt=Date.now()+7000}
+ AUTO_DOUBLE.started=true;AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=Date.now()+8000;
+ $('#localCasinoNote').hidden=false;
+}
+setInterval(()=>{
+ if(!AUTO_CASINO_MODE||!ME)return;
+ const now=Date.now();
+ if(AUTO_ROCKET.phase==='betting'){
+  const left=Math.max(0,Math.ceil((AUTO_ROCKET.endsAt-now)/1000));
+  $('#rphase').textContent=`🚀 Приём ставок · старт через ${left} сек`;
+  if(!AUTO_ROCKET.queuedBet)$('#rgo').textContent=`ПОСТАВИТЬ НА РАУНД · ${left}с`;
+  if(now>=AUTO_ROCKET.endsAt){
+   const bet=AUTO_ROCKET.queuedBet;AUTO_ROCKET.queuedBet=0;AUTO_ROCKET.phase='running';
+   const crash=Math.max(1,Math.min(1000,Math.floor(97/(1-rnd()))/100));
+   Object.assign(R,{on:true,bet,cashed:!bet,m:1,t:0,serverT:0,serverSyncMono:performance.now(),crash,auto:+$('#rauto').value||0,t0:performance.now(),serverRoundId:null,pollBusy:false,lastPoll:0,lastServerSync:now,pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
+   if(bet){ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;$('#rmsg').textContent='🚀 Раунд начался! Твоя ставка: '+fmt(bet)+' 🍬';$('#rgo').textContent='ЗАБРАТЬ ВЫИГРЫШ';$('#rgo').classList.add('pulse');}else{$('#rmsg').textContent='Раунд начался — можно наблюдать';$('#rgo').textContent='РАУНД ИДЁТ';}
+   $('#rgo').disabled=!bet;$('#mult').classList.remove('dead');botStart();save();tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
+  }
+ }else if(AUTO_ROCKET.phase==='running'){
+  if(R.on&&R.bet>0&&!R.cashed){$('#rgo').disabled=false;$('#rgo').textContent='ЗАБРАТЬ '+fmt(R.bet*R.m)+' 🍬'}
+  else if(R.on){$('#rgo').disabled=true;$('#rgo').textContent='РАУНД ИДЁТ…'}
+  $('#rphase').textContent='🚀 Раунд идёт · ставки закрыты';
+ }else if(AUTO_ROCKET.phase==='intermission'&&now>=AUTO_ROCKET.endsAt){
+  AUTO_ROCKET.phase='betting';AUTO_ROCKET.endsAt=now+7000;R.bet=0;R.cashed=false;R.settled=false;$('#rgo').disabled=false;$('#rgo').textContent='ПОСТАВИТЬ НА РАУНД';$('#rphase').textContent='Открывается приём ставок…';
+ }
+ if(AUTO_DOUBLE.phase==='betting'){
+  const left=Math.max(0,Math.ceil((AUTO_DOUBLE.endsAt-now)/1000));
+  $('#dphase').textContent=`🎲 Приём ставок · закрытие через ${left} сек`;
+  $('#dgo').disabled=true;$('#dgo').textContent=`СТАВКИ ЗАКРОЮТСЯ · ${left}с`;
+  if(now>=AUTO_DOUBLE.endsAt){AUTO_DOUBLE.phase='running';autoDoubleSpin()}
+ }else if(AUTO_DOUBLE.phase==='intermission'&&now>=AUTO_DOUBLE.endsAt){
+  AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=now+8000;D.b={b:0,g:0,y:0};upB();$('#dgo').disabled=true;$('#dgo').textContent='СТАВКИ ЗАКРОЮТСЯ · 08с';$('#dphase').textContent='Новый раунд · приём ставок открыт';
+ }else if(AUTO_DOUBLE.phase==='running'){$('#dphase').textContent='🎲 Вращение · ставки закрыты'}
+},200);
 setInterval(()=>{
  if(!R.on){if(RE&&Date.now()-RE>4500){RB=[];RE=0}if(!RE&&RB.length<11&&rnd()<.8)RB.push(mkBot(RB));live($('#rlive'),RB);$('#rcnt').textContent='('+RB.length+')'}
  if(!D.busy){if(DE&&Date.now()-DE>4500){DB=[];DE=0}if(!DE&&DB.length<11&&rnd()<.8){const b=mkBot(DB);b.c=dc();DB.push(b)}live($('#dlive'),DB,1)}
 },1500);
 setInterval(()=>{ON=Math.max(800,ON+Math.round((rnd()-.5)*50));$('#onl').textContent=fmt(ON)},2500);$('#onl').textContent=fmt(ON);
 botEvt();setTimeout(botEvt,900);
-addEventListener('keydown',e=>{if(e.code=='Space'&&$('#login').hidden&&!['INPUT','BUTTON'].includes(e.target.tagName)&&!$('#rocket').hidden&&!$('#mega').classList.contains('on')){e.preventDefault();$('#rgo').click()}});
+addEventListener('keydown',e=>{if(e.code=='Space'&&$('#login').hidden&&!['INPUT','BUTTON'].includes(e.target.tagName)&&!$('#rocket').hidden&&!$('#mega').classList.contains('on')&&AUTO_ROCKET.phase==='running'&&R.bet>0&&!R.cashed){e.preventDefault();$('#rgo').click()}});
 /* ===== аккаунты, бабушка с кулдауном, промокоды ===== */
 let ME=null,ACC={gran:0,promos:[]},saveTimer=0,saveRecovered=false,saveErrorShown=false;
 const GR=300000, SAVE_VERSION=3, KEY=n=>'fc_acc_'+String(n).trim().toLowerCase(),ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v);return true}catch(e){return false}}};
@@ -1669,7 +1725,7 @@ async function claimGrandma(){if(!ME)return;if(authUser){try{const result=await 
 async function claimTimedEvent(){if(!ME)return;if(authUser){try{const result=await cloudRpc('fantik_claim_timed_event',{p_request_id:crypto.randomUUID()});await refreshEconomy();if(result.type==='candy'){const c=CD.find(x=>x.id===result.item_id);if(c)ACC.collection=[...new Set([...(ACC.collection||[]),c.id])];recordAction('event','Подарок события: '+(result.item_name||'конфета'),Number(result.item_value)||0);addXP(25);toast('🎁 Событие: '+(result.item_name||'конфета')+' отправлена на склад')}else{recordAction('event',result.event_title||'Событие',Number(result.reward)||0);addXP(18);celebrate(Number(result.reward)||0,Number(result.reward)||0);toast('🎉 '+(result.event_title||'Событие')+': +'+fmt(Number(result.reward)||0)+' фантиков')}save()}catch(e){toast('Событие уже завершилось или награда недоступна: '+e.message)}return}const ev=ACC.timedEvent;if(!ev?.active||Date.now()>=ev.endsAt){eventTick();return}if(ev.type==='candy'){const c=pick(CD.filter(x=>x.p>=1200));giveItem(c);toast('🎁 Событие: '+c.n+' отправлена на склад');recordAction('event','Подарок события: '+c.n,c.p);addXP(25)}else{setBal(ev.reward);recordAction('event',ev.title,ev.reward);addXP(18);celebrate(ev.reward,ev.reward);toast('🎉 '+ev.title+': +'+fmt(ev.reward)+' фантиков')}ACC.timedEvent={active:false,nextAt:Date.now()+8*60000+Math.floor(rnd()*9*60000)};save();eventTick()}
 function login(n,a,user=null,initialAccount=null){if(ME)save();const loaded=readAccount(n);ME={n,a,id:user?.id||null,email:user?.email||null};ACC=normalizeAccount(initialAccount||loaded.account||{},n,a);saveRecovered=loaded.recovered;bal=ACC.balance;muted=!!ACC.settings.muted;document.body.classList.toggle('low-fx',!!ACC.settings.lowFx);$('#mute').textContent=muted?'🔇':'🔊';uid=0;INV=ACC.inventory.map(v=>{const c=CD.find(x=>x.id===v.id);uid=Math.max(uid,v.uid||0);return c?{u:v.uid||++uid,c}:null}).filter(Boolean);uid=Math.max(uid,...INV.map(o=>o.u),0);SEL.clear();USEL.clear();$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);$('#me').textContent=a+' '+n;$('#login').hidden=true;$('#gran').disabled=false;if(!authUser)ensureTimedState();
  if(authUser){ACC.stagedDouble=null;ACC.pendingReward=null;ACC.pendingDouble=null;ACC.pendingRocket=null;D.b={b:0,g:0,y:0};D.current=null;}else{if(ACC.stagedDouble){const refund=Object.values(ACC.stagedDouble).reduce((a,b)=>a+Math.max(0,Number(b)||0),0);bal+=refund;ACC.stagedDouble=null;recordAction('double','Невращённые ставки возвращены после перезагрузки',refund)}if(ACC.pendingReward)awardPendingCase(ACC.pendingReward.id,true);if(ACC.pendingDouble)settlePendingDouble(ACC.pendingDouble);if(ACC.pendingRocket){const pr=ACC.pendingRocket;ACC.pendingRocket=null;if(pr.auto>0&&pr.auto<pr.crash){const payout=Math.floor(pr.bet*pr.auto);bal+=payout;$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.stats.rocketWins=(ACC.stats.rocketWins||0)+1;recordAction('rocket','Автовывод восстановлен после перезагрузки',payout)}else recordAction('rocket','Незавершённый раунд завершён при восстановлении',0);toast('Незавершённый раунд ракеты восстановлен по сохранённому результату');save()}}
- grTick();eventTick();rInv();rUp();renderAccountUpgrades();renderProfile();updateProgress();save();if(loaded.recovered)toast('Сохранение восстановлено из резервной копии');else if(loaded.exists&&!loaded.account)toast('⚠️ Старое сохранение повреждено, резервной копии нет. Создан новый профиль.');else toast('Добро пожаловать, '+n+'! 🍬')}
+ grTick();eventTick();rInv();rUp();renderAccountUpgrades();renderProfile();updateProgress();save();startAutoCasino();if(loaded.recovered)toast('Сохранение восстановлено из резервной копии');else if(loaded.exists&&!loaded.account)toast('⚠️ Старое сохранение повреждено, резервной копии нет. Создан новый профиль.');else toast('Добро пожаловать, '+n+'! 🍬')}
 let AV=ls.get('fc_av')||BA[0];$('#avs').innerHTML=BA.map(a=>`<button data-a='${a}' class='${a==AV?'on':''}'>${a}</button>`).join('');$$('#avs button').forEach(b=>b.onclick=()=>{AV=b.dataset.a;$$('#avs button').forEach(x=>x.classList.toggle('on',x==b))});$('#nick').value=ls.get('fc_last')||'';
 $('#lgo').onclick=signInCloudAccount;$('#registerBtn').onclick=registerCloudAccount;
 ['authEmail','authPassword'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{if(e.key==='Enter')signInCloudAccount()}));
