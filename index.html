@@ -1078,6 +1078,7 @@ document.addEventListener('visibilitychange',()=>{
  else if(R.on){R.lastPoll=0;startRocketLoop();if(authUser&&R.serverRoundId)pollCloudRocket()}
 });
 async function cash(m){
+ if(authUser&&!R.serverRoundId){toast('Нет подтверждённого облачного раунда. Локальная выплата отключена.');return}
  if(authUser&&R.serverRoundId){
   if(R.cashed||R.cashPending)return;
   R.cashPending=true;
@@ -1143,7 +1144,7 @@ function resumeCloudRocket(active){
  if(!active?.round_id||R.on)return;
  Object.assign(R,{on:true,bet:Number(active.bet),cashed:false,m:1,t:0,serverT:0,serverSyncMono:performance.now(),crash:1000,auto:0,t0:performance.now(),serverRoundId:active.round_id,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Проверяем состояние активного раунда на сервере…';
- $('#rgo').classList.add('pulse');$('#rgo').disabled=false;$('#rgo').textContent='ПРОВЕРКА СЕРВЕРНОГО РАУНДА…';
+ $('#rgo').classList.add('pulse');$('#rgo').disabled=false;$('#rgo').textContent='ПРОВЕРКА СЕРВЕРНОГО РАУНДА…';$('#rphase').textContent='🚀 Восстанавливаем облачный раунд';
  startRocketLoop();pollCloudRocket();
 }
 function rcrash(){
@@ -1155,12 +1156,13 @@ function rcrash(){
  chip('#rhist',R.crash.toFixed(2)+'x',R.crash<2?'lo':R.crash<10?'mid':'hi');
  if(R.bet>0&&!R.cashed){$('#rmsg').textContent='💥 Улетела на '+R.crash.toFixed(2)+'x. −'+fmt(R.bet)+' 🍬';lose()}
  else $('#rmsg').textContent='Раунд завершён на '+R.crash.toFixed(2)+'x';
- $('#rgo').classList.remove('pulse');$('#rgo').disabled=false;$('#rgo').textContent=AUTO_CASINO_MODE?'ПРИЁМ СТАВОК…':'СТАРТ 🚀';
- if(AUTO_CASINO_MODE){AUTO_ROCKET.phase='intermission';AUTO_ROCKET.endsAt=Date.now()+3500;AUTO_ROCKET.queuedBet=0;}
+ $('#rgo').classList.remove('pulse');$('#rgo').disabled=false;$('#rgo').textContent=authUser?'СТАРТ 🚀':(AUTO_CASINO_MODE?'ПРИЁМ СТАВОК…':'СТАРТ 🚀');
+ if(AUTO_CASINO_MODE&&!authUser){AUTO_ROCKET.phase='intermission';AUTO_ROCKET.endsAt=Date.now()+3500;AUTO_ROCKET.queuedBet=0;}
+ if(authUser)$('#rphase').textContent='Раунд завершён · можно начать новый';
 }
 $('#rgo').onclick=async()=>{
  ac();
- if(AUTO_CASINO_MODE){
+ if(AUTO_CASINO_MODE&&!authUser){
   if(AUTO_ROCKET.phase==='betting'){
    if(AUTO_ROCKET.queuedBet){toast('Ставка уже принята на следующий раунд');return}
    const b=getBet('#rocket');if(!b)return;
@@ -1179,7 +1181,7 @@ $('#rgo').onclick=async()=>{
  else setBal(-b);
  const elapsed=Math.max(0,(Date.now()-startedAt)/1000);
  Object.assign(R,{on:true,bet:b,cashed:false,m:1,t:elapsed,serverT:elapsed,serverSyncMono:performance.now(),crash,auto:+$('#rauto').value||0,t0:performance.now()-elapsed*1000,serverRoundId,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
- if(authUser){bal=startingBalance;paintLocalBalance();ACC.pendingRocket=null}else ACC.pendingRocket={bet:b,crash:R.crash,auto:R.auto,startedAt:Date.now()};
+ if(authUser){bal=startingBalance;paintLocalBalance();ACC.pendingRocket=null;$('#rphase').textContent='🚀 Твой облачный раунд идёт'}else ACC.pendingRocket={bet:b,crash:R.crash,auto:R.auto,startedAt:Date.now()};
  ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;save();
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Ставка '+fmt(b)+' 🍬 — взлетаем!';$('#rgo').classList.add('pulse');
  tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
@@ -1192,10 +1194,10 @@ strip.innerHTML=Array.from({length:132},(_,i)=>{const n=ORD[i%ORD.length],c=col(
 let DS={i:22,j:0};
 function setPos(i,j,anim){const W=$('.wheel').clientWidth||360;if(!anim)strip.style.transition='none';strip.style.transform=`translateX(${-(i*CW+CW/2+j-W/2)}px)`;DS={i,j}}
 setPos(22,0,false);addEventListener('resize',()=>setPos(DS.i,DS.j,false));
-const D={b:{b:0,g:0,y:0},busy:false,current:null};let dRevealT=0;
+const D={b:{b:0,g:0,y:0},busy:false,current:null,requestId:null,requestWagers:null,blocked:false};let dRevealT=0;
 function upB(){for(const c in D.b)$('#b-'+c).textContent=D.b[c]?fmt(D.b[c]):''}
 function payoutDouble(round){return (round.wagers[round.color]||0)*D_COLORS[round.color].coef*round.multiplier}
-function settleDouble(round,offline=false){if(!round||!ACC)return;const total=Object.values(round.wagers).reduce((a,b)=>a+b,0),pay=payoutDouble(round),profit=pay-total;if(round.serverBalance!==undefined){bal=Math.max(0,Math.floor(Number(round.serverBalance)||0));}else{bal=Math.max(0,bal+pay)}$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingDouble=null;ACC.stats=ACC.stats||{};ACC.stats.doubleRounds=(ACC.stats.doubleRounds||0)+1;if(profit>0)ACC.stats.doubleWins=(ACC.stats.doubleWins||0)+1;recordAction('double',`Дабл: ${D_COLORS[round.color].label}${round.multiplier>1?' · множитель ×'+round.multiplier:''}`,pay);if(profit>0)publishActivity(crypto.randomUUID(),'double','выиграл в Дабл',`${D_COLORS[round.color].label}${round.multiplier>1?' · ×'+round.multiplier:''}`,pay);addXP(Math.max(8,Math.floor(total/100)));if(!offline){chip('#dhist',D_COLORS[round.color].mark,round.color);D.b={b:0,g:0,y:0};D.busy=false;D.current=null;upB();$('#dgo').disabled=false;$('#dgo').textContent='КРУТИТЬ 🎲';$('#dmult').hidden=true;if(profit>0)celebrate(pay,profit);else{toast(`Выпало ${D_COLORS[round.color].label}${profit<0?' · −'+fmt(-profit):''}`);lose()}}else toast(`Незавершённый раунд Дабла восстановлен: ${D_COLORS[round.color].label}`);save();}
+function settleDouble(round,offline=false){if(!round||!ACC)return;const total=Object.values(round.wagers).reduce((a,b)=>a+b,0),pay=round.serverPayout!==undefined?Math.max(0,Math.floor(Number(round.serverPayout)||0)):payoutDouble(round),profit=pay-total;if(round.serverBalance!==undefined){bal=Math.max(0,Math.floor(Number(round.serverBalance)||0));}else{bal=Math.max(0,bal+pay)}$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingDouble=null;ACC.stats=ACC.stats||{};ACC.stats.doubleRounds=(ACC.stats.doubleRounds||0)+1;if(profit>0)ACC.stats.doubleWins=(ACC.stats.doubleWins||0)+1;recordAction('double',`Дабл: ${D_COLORS[round.color].label}${round.multiplier>1?' · множитель ×'+round.multiplier:''}`,pay);if(profit>0)publishActivity(crypto.randomUUID(),'double','выиграл в Дабл',`${D_COLORS[round.color].label}${round.multiplier>1?' · ×'+round.multiplier:''}`,pay);addXP(Math.max(8,Math.floor(total/100)));if(!offline){chip('#dhist',D_COLORS[round.color].mark,round.color);D.b={b:0,g:0,y:0};D.requestId=null;D.requestWagers=null;D.blocked=false;D.busy=false;D.current=null;upB();$('#dgo').disabled=false;$('#dgo').textContent='КРУТИТЬ 🎲';$('#dmult').hidden=true;if(profit>0)celebrate(pay,profit);else{toast(`Выпало ${D_COLORS[round.color].label}${profit<0?' · −'+fmt(-profit):''}`);lose()}}else toast(`Незавершённый раунд Дабла восстановлен: ${D_COLORS[round.color].label}`);save();}
 function settlePendingDouble(round){
  if(!round)return;
  if(round.rulesVersion===2){settleDouble(round,true);return}
@@ -1206,17 +1208,36 @@ function settlePendingDouble(round){
  round.rulesVersion=2;
  settleDouble(round,true);
 }
-$$('.col').forEach(btn=>btn.onclick=()=>{ac();if(D.busy)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting'){toast('Ставки закрыты до следующего раунда');return}const b=getBet('#double');if(!b)return;const staged=Object.values(D.b).reduce((a,v)=>a+v,0);if(staged+b>bal){toast('Сумма ставок превышает баланс');return}changeLocalBalance(-b);D.b[btn.dataset.c]+=b;ACC.stagedDouble={...D.b};save();upB();tone(660,.06,'square',.1)});
-$('#dclr').onclick=()=>{if(D.busy)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting')return toast('Ставки уже закрыты');const refund=Object.values(D.b).reduce((a,b)=>a+b,0);changeLocalBalance(refund);D.b={b:0,g:0,y:0};ACC.stagedDouble=null;save();upB()};
-$('#dgo').onclick=()=>{if(AUTO_CASINO_MODE){toast(AUTO_DOUBLE.phase==='betting'?'Раунд запустится автоматически после закрытия ставок':'Дабл работает автоматически');return}};
-function autoDoubleSpin(){
+$$('.col').forEach(btn=>btn.onclick=()=>{ac();if(D.busy||D.blocked)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting'){toast('Ставки закрыты до следующего раунда');return}const b=getBet('#double');if(!b)return;const staged=Object.values(D.b).reduce((a,v)=>a+v,0);if(staged+b>bal){toast('Сумма ставок превышает баланс');return}if(!authUser)changeLocalBalance(-b);D.b[btn.dataset.c]+=b;ACC.stagedDouble={...D.b};save();upB();tone(660,.06,'square',.1)});
+$('#dclr').onclick=()=>{if(D.busy)return;if(D.requestId){toast('Сначала повторно проверь результат незавершённого запроса');return}if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting')return toast('Ставки уже закрыты');const refund=Object.values(D.b).reduce((a,b)=>a+b,0);if(!authUser)changeLocalBalance(refund);D.b={b:0,g:0,y:0};D.requestWagers=null;D.blocked=false;ACC.stagedDouble=null;save();upB()};
+$('#dgo').onclick=()=>{if(AUTO_CASINO_MODE){if(authUser&&D.blocked){autoDoubleSpin();return}toast(AUTO_DOUBLE.phase==='betting'?'Раунд запустится автоматически после закрытия ставок':'Дабл работает автоматически');return}};
+async function autoDoubleSpin(){
  const wagers={...D.b},total=Object.values(wagers).reduce((a,b)=>a+b,0);
- const n=Math.floor(rnd()*12),o=ORD.indexOf(n),winning=col(n),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1,j=(rnd()-.5)*36;
- const round={id:'local-d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:winning,multiplier,wagers};
- D.busy=true;D.current=round;AUTO_DOUBLE.phase='running';dbStart();
+ let round;
+ if(authUser&&total>0){
+  D.requestId=D.requestId||crypto.randomUUID();D.requestWagers=D.requestWagers||{...wagers};
+  D.busy=true;D.current={id:D.requestId,wagers:D.requestWagers};AUTO_DOUBLE.phase='running';dbStart();
+  $('#dphase').textContent='Раунд рассчитывается на сервере…';$('#dgo').disabled=true;$('#dgo').textContent='ПОЛУЧАЕМ РЕЗУЛЬТАТ…';
+  try{
+   const result=await cloudRpc('fantik_play_double',{p_wagers:D.requestWagers,p_request_id:D.requestId});
+   const slot=Number(result?.slot),color=String(result?.color||''),multiplier=Number(result?.multiplier),serverBalance=Number(result?.balance),serverPayout=Number(result?.payout);
+   if(!Number.isInteger(slot)||slot<0||slot>11||!['b','g','y'].includes(color)||col(slot)!==color||![1,2].includes(multiplier)||!Number.isFinite(serverBalance)||serverBalance<0||!Number.isFinite(serverPayout)||serverPayout<0)throw new Error('Сервер вернул некорректный результат Дабла');
+   round={id:result.round_id||D.requestId,rulesVersion:2,n:slot,color,multiplier,wagers:{...D.requestWagers},serverBalance,serverPayout};
+  }catch(e){
+   D.busy=false;D.current=null;D.blocked=true;AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=Date.now()+8000;
+   $('#dphase').textContent='Ошибка связи. Нажми «Повторить», чтобы проверить тот же запрос';$('#dgo').disabled=false;$('#dgo').textContent='ПОВТОРИТЬ ЗАПРОС';
+   if(String(e.message||'').includes('Не хватает фантиков')){D.requestId=null;D.requestWagers=null;D.blocked=false;D.b={b:0,g:0,y:0};ACC.stagedDouble=null;upB();try{await refreshEconomyQuiet()}catch(_){} }
+   toast('Не удалось завершить Дабл: '+e.message);return;
+  }
+ }else{
+  const n=Math.floor(rnd()*12),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1;
+  round={id:'local-d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:col(n),multiplier,wagers};
+  D.busy=true;D.current=round;AUTO_DOUBLE.phase='running';dbStart();
+ }
+ const n=round.n,o=ORD.indexOf(n),winning=round.color,j=(rnd()-.5)*36;
  ACC.stagedDouble=null;ACC.pendingDouble=null;save();
  $('#dphase').textContent='Раунд идёт · ставки закрыты';$('#dgo').disabled=true;$('#dgo').textContent='РАУНД ИДЁТ…';
- $('#dmult').hidden=true;clearTimeout(dRevealT);if(multiplier>1)dRevealT=setTimeout(()=>{$('#dmult').textContent='✨ СЛУЧАЙНЫЙ МНОЖИТЕЛЬ ×2';$('#dmult').hidden=false;$('#dmult').classList.remove('reveal');void $('#dmult').offsetWidth;$('#dmult').classList.add('reveal');},DOUBLE_CONFIG.revealDelay);
+ $('#dmult').hidden=true;clearTimeout(dRevealT);if(round.multiplier>1)dRevealT=setTimeout(()=>{$('#dmult').textContent='✨ СЛУЧАЙНЫЙ МНОЖИТЕЛЬ ×2';$('#dmult').hidden=false;$('#dmult').classList.remove('reveal');void $('#dmult').offsetWidth;$('#dmult').classList.add('reveal');},DOUBLE_CONFIG.revealDelay);
  strip.style.transition='transform 3.2s cubic-bezier(.12,.6,.1,1)';setPos(108+o,j,true);noise(3.2,.07);tone(200,3.2,'sine',.055,0,60);
  setTimeout(()=>{
   setPos(12+o,j,false);dbEnd(winning);
@@ -1469,12 +1490,13 @@ function startAutoCasino(){
  if(!AUTO_CASINO_MODE||AUTO_ROCKET.started)return;
  AUTO_ROCKET.started=true;if(R.on&&R.serverRoundId){AUTO_ROCKET.phase='running';AUTO_ROCKET.endsAt=0}else{AUTO_ROCKET.phase='betting';AUTO_ROCKET.endsAt=Date.now()+7000}
  AUTO_DOUBLE.started=true;AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=Date.now()+8000;
- $('#localCasinoNote').hidden=false;
+ $('#localCasinoNote').hidden=!!authUser;
+ if(authUser&&!R.on){$('#rphase').textContent='🚀 Облачная игра · нажми «СТАРТ»';$('#rgo').textContent='СТАРТ 🚀'}
 }
 setInterval(()=>{
  if(!AUTO_CASINO_MODE||!ME)return;
  const now=Date.now();
- if(AUTO_ROCKET.phase==='betting'){
+ if(!authUser&&AUTO_ROCKET.phase==='betting'){
   const left=Math.max(0,Math.ceil((AUTO_ROCKET.endsAt-now)/1000));
   $('#rphase').textContent=`🚀 Приём ставок · старт через ${left} сек`;
   if(!AUTO_ROCKET.queuedBet)$('#rgo').textContent=`ПОСТАВИТЬ НА РАУНД · ${left}с`;
@@ -1485,18 +1507,18 @@ setInterval(()=>{
    if(bet){ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;$('#rmsg').textContent='🚀 Раунд начался! Твоя ставка: '+fmt(bet)+' 🍬';$('#rgo').textContent='ЗАБРАТЬ ВЫИГРЫШ';$('#rgo').classList.add('pulse');}else{$('#rmsg').textContent='Раунд начался — можно наблюдать';$('#rgo').textContent='РАУНД ИДЁТ';}
    $('#rgo').disabled=!bet;$('#mult').classList.remove('dead');botStart();save();tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
   }
- }else if(AUTO_ROCKET.phase==='running'){
+ }else if(!authUser&&AUTO_ROCKET.phase==='running'){
   if(R.on&&R.bet>0&&!R.cashed){$('#rgo').disabled=false;$('#rgo').textContent='ЗАБРАТЬ '+fmt(R.bet*R.m)+' 🍬'}
   else if(R.on){$('#rgo').disabled=true;$('#rgo').textContent='РАУНД ИДЁТ…'}
   $('#rphase').textContent='🚀 Раунд идёт · ставки закрыты';
- }else if(AUTO_ROCKET.phase==='intermission'&&now>=AUTO_ROCKET.endsAt){
+ }else if(!authUser&&AUTO_ROCKET.phase==='intermission'&&now>=AUTO_ROCKET.endsAt){
   AUTO_ROCKET.phase='betting';AUTO_ROCKET.endsAt=now+7000;R.bet=0;R.cashed=false;R.settled=false;$('#rgo').disabled=false;$('#rgo').textContent='ПОСТАВИТЬ НА РАУНД';$('#rphase').textContent='Открывается приём ставок…';
  }
  if(AUTO_DOUBLE.phase==='betting'){
   const left=Math.max(0,Math.ceil((AUTO_DOUBLE.endsAt-now)/1000));
   $('#dphase').textContent=`🎲 Приём ставок · закрытие через ${left} сек`;
   $('#dgo').disabled=true;$('#dgo').textContent=`СТАВКИ ЗАКРОЮТСЯ · ${left}с`;
-  if(now>=AUTO_DOUBLE.endsAt){AUTO_DOUBLE.phase='running';autoDoubleSpin()}
+  if(now>=AUTO_DOUBLE.endsAt){if(D.blocked){$('#dgo').disabled=false;$('#dgo').textContent='ПОВТОРИТЬ ЗАПРОС'}else{AUTO_DOUBLE.phase='running';autoDoubleSpin()}}
  }else if(AUTO_DOUBLE.phase==='intermission'&&now>=AUTO_DOUBLE.endsAt){
   AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=now+8000;D.b={b:0,g:0,y:0};upB();$('#dgo').disabled=true;$('#dgo').textContent='СТАВКИ ЗАКРОЮТСЯ · 08с';$('#dphase').textContent='Новый раунд · приём ставок открыт';
  }else if(AUTO_DOUBLE.phase==='running'){$('#dphase').textContent='🎲 Вращение · ставки закрыты'}
