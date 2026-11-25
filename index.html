@@ -861,7 +861,7 @@ function rloop(frameNow){
   t=Math.min(crashTime,Math.max(0,(now-R.t0)/1000));R.t=t;R.m=Math.min(crash,Math.exp(.15*t));m=R.m;
   if(m>=crash)return rcrash();
  }
- if(R.auto&&!R.cashed&&!cloudRound&&m>=R.auto)cash(R.auto);
+ if(R.auto&&!R.cashed&&m>=R.auto)cash(R.auto);
  // Paint smoothly at up to 60 fps; simulated bot rows still update at 4 Hz.
  if(now-(R.lastPaint||0)>=1000/60){
   R.lastPaint=now;
@@ -1137,7 +1137,7 @@ $('#copen').onclick=async()=>{ac();if(cbusy||pendingCaseItem||!CUR)return;const 
  cbusy=true;$('#copen').disabled=true;$('#copen').textContent='СЕРВЕР ВЫБИРАЕТ ПРЕДМЕТ…';const k=CUR;let win,awarded,charged=cost,localRewardId=null;
  try{
    if(authUser){const result=await cloudRpc('fantik_open_case',{p_case_id:k.id,p_request_id:crypto.randomUUID()});
-     win=CD.find(x=>x.id===result.item_id);if(!win)throw new Error('Сервер вернул неизвестный предмет');
+     win=k.it.find(x=>String(x.id)===String(result.item_id))||CD.find(x=>String(x.id)===String(result.item_id));if(!win)throw new Error('Сервер вернул предмет, которого нет в составе выбранного кейса');
      charged=Number(result.price);bal=Number(result.balance);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);
      if(result.item_instance_id!==null&&result.item_instance_id!==undefined){awarded={u:Number(result.item_instance_id),c:win};INV.push(awarded);uid=Math.max(uid,awarded.u);}
      else{await refreshEconomy();toast('Этот запрос открытия уже был обработан ранее. Склад обновлён.');}
