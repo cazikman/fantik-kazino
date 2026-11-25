@@ -8,7 +8,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;min-height:100vh}
 header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;flex-wrap:wrap}
-.logo{display:flex;align-items:center;flex:0 1 auto;min-width:0}.logo img{display:block;width:clamp(190px,24vw,260px);max-width:48vw;max-height:66px;height:auto;object-fit:contain}
+.logo{display:flex;align-items:center;flex:0 1 auto;min-width:0}.logo img{display:block;width:clamp(250px,30vw,340px);max-width:55vw;max-height:100px;height:auto;object-fit:contain}
 .bal{font-size:22px;font-weight:800;background:var(--card);padding:6px 14px;border-radius:30px;border:2px solid var(--ac)}
 button{font:inherit;cursor:pointer;border:0;border-radius:12px;color:#fff;background:#3b2a7a;padding:10px 14px;font-weight:700}
 button:active{transform:scale(.96)}button:disabled{opacity:.5;cursor:not-allowed}
@@ -106,7 +106,7 @@ button,.ci,.cs{overflow-wrap:anywhere;min-width:0}
 .big{font-size:clamp(15px,4.6vw,20px);padding:14px 10px}
 .col{padding:12px 2px;font-size:clamp(11px,3.2vw,14px)}.col small{font-size:13px;overflow-wrap:anywhere}
 label{min-width:0}h3,h4{overflow-wrap:anywhere}#rmsg{font-size:13px;line-height:1.25}#uinfo,#cres{overflow-wrap:anywhere}
-.logo img{width:clamp(160px,43vw,220px);max-height:54px}.bal{font-size:clamp(16px,5vw,22px);white-space:nowrap}.bal small{display:block;font-size:10px;color:#ffe27a;text-align:right;font-weight:700;line-height:1.1}
+.logo img{width:clamp(190px,55vw,280px);max-width:58vw;max-height:82px}.bal{font-size:clamp(16px,5vw,22px);white-space:nowrap}.bal small{display:block;font-size:10px;color:#ffe27a;text-align:right;font-weight:700;line-height:1.1}
 /* — живой сайт: боты — */
 .onl{font-size:13px;color:#7dff9f;background:var(--card);padding:6px 10px;border-radius:20px;white-space:nowrap}
 #feed{display:grid;gap:4px;padding:0 14px 10px}
@@ -564,6 +564,14 @@ label{color:#bac7e1}
 .history-entry-detail{grid-column:1/-1;padding:9px 10px;border-radius:9px;background:#17112d;border:1px solid #392b5c;color:#c9c2dc;font-size:11px;line-height:1.5;overflow-wrap:anywhere}
 .history-empty{padding:20px 12px;text-align:center;border:1px dashed #40315f;border-radius:12px;color:var(--mut);font-size:12px}
 @media(max-width:599px){.profile-history-panel{padding:10px}.history-filters{gap:5px}.history-filters button{padding:7px 8px}.history-entry{grid-template-columns:30px minmax(0,1fr) auto;gap:7px;padding:8px}.history-entry-icon{width:29px;height:29px}.history-entry-value{font-size:11px}}
+
+.profile-code-panel{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.profile-code-card{display:grid;align-content:start;gap:8px;min-width:0;padding:14px;border:1px solid #493775;border-radius:15px;background:linear-gradient(145deg,#1b2947,#111a30)}
+.profile-code-card h3{margin:0;font-size:15px;color:#ffe27a}
+.profile-code-card p{margin:0;line-height:1.45}
+.profile-code-card input{width:100%;min-width:0}
+.profile-code-card button{font-size:12px;padding:10px}
+@media(max-width:599px){.profile-code-panel{grid-template-columns:1fr}.profile-code-card{padding:12px}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -640,6 +648,22 @@ label{color:#bac7e1}
 </section>
 <section id="profile" hidden>
  <h2>Твой профиль</h2><div id="profileCard" class="profile-card"></div><div class="profile-stats" id="profileStats"></div>
+ <div class="profile-code-panel">
+  <div class="profile-code-card">
+   <h3>🎟️ Активировать промокод</h3>
+   <p class="mut">Введи обычный промокод, чтобы получить предусмотренную награду.</p>
+   <input id="profilePromoCode" maxlength="40" placeholder="Введи промокод" autocomplete="off" autocapitalize="characters">
+   <button id="profilePromoSubmit" class="big" type="button">АКТИВИРОВАТЬ ПРОМОКОД</button>
+   <p id="profilePromoMessage" class="mut" role="status" aria-live="polite"></p>
+  </div>
+  <div class="profile-code-card">
+   <h3>🤝 Привязать авторский код</h3>
+   <p class="mut">Авторский код не выдаёт бонус. Он привязывает аккаунт к автору; сделать это можно только один раз.</p>
+   <input id="profileAuthorCode" maxlength="32" placeholder="Введи авторский код" autocomplete="off" autocapitalize="characters">
+   <button id="profileAuthorSubmit" class="big" type="button">ПРИВЯЗАТЬ АВТОРСКИЙ КОД</button>
+   <p id="profileAuthorMessage" class="mut" role="status" aria-live="polite"></p>
+  </div>
+ </div>
  <div class="profile-history-panel">
   <div class="profile-history-head"><div><h3>📜 История операций</h3><p class="mut">Последние 80 действий в твоём профиле</p></div><span id="historyCount" class="history-count">0 / 80</span></div>
   <div id="historyFilters" class="history-filters" role="group" aria-label="Фильтр истории">
@@ -752,7 +776,7 @@ label{color:#bac7e1}
 </section>
 </main>
 <footer>Это шуточная игра: фантики — только виртуальная валюта. Для удобства показан условный курс 10 фантиков = 1 ₽; это не реальные деньги, купить или вывести их нельзя. Прогресс синхронизируется с облачным аккаунтом; локальная копия используется как резервная.<br>Настоящая синхронизация между устройствами требует серверного аккаунта.</footer>
-<div id="login"><div class="lcard"><div class="logo">🎰 ФАНТИК<b>-КАЗИНО</b></div><p class="mut">Облачный аккаунт · вход с любого устройства</p><label>Твой игровой ник<input id="nick" maxlength="16" placeholder="например, Player123" autocomplete="nickname"></label><div class="avs" id="avs"></div><label>Email<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label><label>Пароль<input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Минимум 8 символов"></label><p id="lerr" class="mut" role="status">Создай аккаунт или войди. Прогресс будет привязан к уникальному ID, а не только к нику.</p><button id="lgo" class="big">ВОЙТИ 🍬</button><button id="registerBtn" type="button">СОЗДАТЬ АККАУНТ</button><p class="mut">При первой регистрации локальный прогресс с таким же ником будет перенесён в облако, если он есть в этом браузере.</p></div></div>
+<div id="login"><div class="lcard"><div class="logo">🎰 ФАНТИК<b>-КАЗИНО</b></div><p class="mut">Облачный аккаунт · вход с любого устройства</p><label>Твой игровой ник<input id="nick" maxlength="16" placeholder="например, Player123" autocomplete="nickname"></label><div class="avs" id="avs"></div><label>Email<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label><label>Пароль<input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Минимум 8 символов"></label><label>Авторский код <span class="mut">(необязательно)</span><input id="registerAuthorCode" maxlength="32" placeholder="Если тебя пригласил автор" autocomplete="off" autocapitalize="characters"></label><p id="lerr" class="mut" role="status">Создай аккаунт или войди. Прогресс будет привязан к уникальному ID, а не только к нику.</p><button id="lgo" class="big">ВОЙТИ 🍬</button><button id="registerBtn" type="button">СОЗДАТЬ АККАУНТ</button><p class="mut">При первой регистрации локальный прогресс с таким же ником будет перенесён в облако, если он есть в этом браузере.</p></div></div>
 <div id="promo" hidden><div class="lcard"><b>🎁 Обычный промокод</b><input id="pin" placeholder="Введи промокод с наградой" autocomplete="off" autocapitalize="characters"><button id="pgo" class="big">АКТИВИРОВАТЬ ПРОМОКОД</button><p id="pmsg" class="mut"></p><div class="divider"></div><b>🤝 Есть авторский код?</b><p class="author-note">Привязка автора не выдаёт бонус. Автор будет получать комиссию с твоих ставок и открытий кейсов.</p><button id="openAuthorBind" type="button">ПРИВЯЗАТЬ АВТОРСКИЙ КОД</button><button id="pclose">Закрыть</button></div></div>
 <div id="authorBind" hidden><div class="lcard"><b>🤝 Привязка авторского кода</b><input id="authorBindCode" maxlength="32" placeholder="Введи авторский код" autocomplete="off" autocapitalize="characters"><button id="authorBindSubmit" class="big">ПРИВЯЗАТЬ КОД</button><p id="authorBindMessage" class="mut" role="status"></p><p class="author-note">Код можно привязать только один раз. После привязки изменить автора нельзя.</p><button id="authorBindClose" type="button">Закрыть</button></div></div>
 <div id="toast"></div>
@@ -1376,6 +1400,17 @@ async function completeCloudLogin(user){
  if(economy.active_rocket)resumeCloudRocket(economy.active_rocket);
  if(!cloudSave?.game_data && local.account){toast('Найдена старая локальная копия. Настройки и история восстановлены, но неподтверждённые локальные баланс и склад не импортируются в защищённую экономику.');}
  else if(!cloudSave?.game_data){toast('Облачный аккаунт создан. Добро пожаловать!');}
+ const pendingAuthorCode=String(user.user_metadata?.author_code||'').trim().toUpperCase();
+ if(pendingAuthorCode){
+  try{
+   const result=await cloudRpc('fantik_bind_author_code',{p_code:pendingAuthorCode});
+   toast('🤝 Авторский код '+pendingAuthorCode+' привязан'+(result?.display_name?' · автор: '+result.display_name:'')+'.');
+  }catch(err){
+   toast('Не удалось привязать авторский код: '+err.message+'. Его можно ввести в профиле.');
+  }finally{
+   try{await sb.auth.updateUser({data:{author_code:null}});}catch(err){console.warn('Не удалось очистить временный авторский код:',err.message);}
+  }
+ }
 }
 async function initializeCloudAuth(){
  if(!cloudConfigured()){
@@ -1398,12 +1433,15 @@ async function registerCloudAccount(){
  if(BN.some(b=>b.toLowerCase()===n.toLowerCase())){e.textContent='Этот ник занят одним из игроков 😅';return;}
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){e.textContent='Введи корректный email.';return;}
  if(password.length<8){e.textContent='Пароль должен содержать не менее 8 символов.';return;}
+ const authorCode=$('#registerAuthorCode').value.trim().toUpperCase();
+ if(authorCode&&!/^[A-Z0-9_-]{3,32}$/.test(authorCode)){e.textContent='Авторский код: 3–32 символа — латинские буквы, цифры, _ или -.';return;}
  $('#registerBtn').disabled=true;e.textContent='Создаём аккаунт…';
- const {data,error}=await sb.auth.signUp({email,password,options:{data:{username:n,avatar:AV},emailRedirectTo:location.origin+location.pathname}});
+ const userMetadata={username:n,avatar:AV,...(authorCode?{author_code:authorCode}:{})};
+ const {data,error}=await sb.auth.signUp({email,password,options:{data:userMetadata,emailRedirectTo:location.origin+location.pathname}});
  $('#registerBtn').disabled=false;
  if(error){e.textContent=friendlyAuthError(error.message);return;}
  if(data.session?.user){try{await completeCloudLogin(data.session.user);}catch(err){e.textContent=friendlyAuthError(err.message);}}
- else{e.textContent='Аккаунт создан! Подтверди email по ссылке из письма, затем вернись на сайт и нажми «ВОЙТИ». Проверь также папку «Спам».';}
+ else{e.textContent='Аккаунт создан! Подтверди email по ссылке из письма, затем вернись на сайт и нажми «ВОЙТИ». Проверь также папку «Спам». '+(authorCode?'Авторский код сохранён и будет привязан после первого входа.':'');}
 }
 async function signInCloudAccount(){
  ac();const email=$('#authEmail').value.trim().toLowerCase(),password=$('#authPassword').value,e=$('#lerr');
@@ -1551,9 +1589,42 @@ const PR={
 $('#pbtn').onclick=()=>{$('#pmsg').textContent='';$('#promo').hidden=false;$('#pin').focus()};$('#pclose').onclick=()=>$('#promo').hidden=true;
 $('#openAuthorBind').onclick=()=>{if(!authUser){$('#pmsg').textContent='Для привязки авторского кода войди в облачный аккаунт.';return}$('#promo').hidden=true;$('#authorBindMessage').textContent='';$('#authorBind').hidden=false;$('#authorBindCode').focus()};
 $('#authorBindClose').onclick=()=>$('#authorBind').hidden=true;
-async function submitAuthorBinding(){ac();const code=$('#authorBindCode').value.trim().toUpperCase(),msg=$('#authorBindMessage');if(!code)return;if(!authUser){msg.textContent='❌ Сначала войди в облачный аккаунт.';return}const btn=$('#authorBindSubmit');btn.disabled=true;msg.textContent='Проверяю код…';try{const result=await cloudRpc('fantik_bind_author_code',{p_code:code});msg.textContent='✅ Авторский код привязан. '+(result.display_name?'Автор: '+result.display_name:'');$('#authorBindCode').value='';}catch(e){msg.textContent='❌ '+e.message;}finally{btn.disabled=false;}}
-$('#authorBindSubmit').onclick=submitAuthorBinding;$('#authorBindCode').addEventListener('keydown',e=>{if(e.key==='Enter')submitAuthorBinding()});
-$('#pgo').onclick=async()=>{ac();const c=$('#pin').value.trim().toUpperCase(),m=$('#pmsg');if(!c)return;if(c==='HODILDABRODILDA'){m.textContent='ℹ️ Этот код заменён. Используй BRODILDA.';return}if(authUser){try{const result=await cloudRpc('fantik_redeem_promo',{p_code:c,p_request_id:crypto.randomUUID()});await refreshEconomy();const names=(result.items||[]).map(x=>x.item_name).join(', ');let message;if(result.reward_type==='pandora_items')message='Заказ доставлен: '+names;else if(result.reward_type==='grandma_boost')message='Бонус +'+fmt(result.reward_amount)+' 🍬. Бабушка скоро появится!';else message='Бонус +'+fmt(result.reward_amount)+' 🍬';m.textContent='✅ '+message;$('#pin').value='';recordAction('promo','Активирован промокод '+c,Number(result.reward_amount)||0);addXP(10);if(result.reward_type==='lottery')celebrate(Number(result.reward_amount)||0,Number(result.reward_amount)||0);else coin();save()}catch(e){m.textContent='❌ '+e.message}return}if(!PR[c]){m.textContent='❌ Нет такого кода';lose();return}if(ACC.promos.includes(c)){m.textContent='⚠️ Этот код уже активирован на твоём аккаунте';return}ACC.promos.push(c);const result=PR[c].run();m.textContent='✅ '+result;$('#pin').value='';recordAction('promo','Активирован промокод '+c);addXP(10);save()};$('#pin').addEventListener('keydown',e=>{if(e.key==='Enter')$('#pgo').click()});
+async function submitAuthorCode(inputId,messageId,buttonId){
+ ac();const input=$('#'+inputId),msg=$('#'+messageId),btn=$('#'+buttonId),code=input.value.trim().toUpperCase();
+ if(!code){msg.textContent='Введи авторский код.';return;}
+ if(!authUser){msg.textContent='❌ Сначала войди в облачный аккаунт.';return;}
+ btn.disabled=true;msg.textContent='Проверяю код…';
+ try{const result=await cloudRpc('fantik_bind_author_code',{p_code:code});msg.textContent='✅ Авторский код привязан. '+(result?.display_name?'Автор: '+result.display_name:'');input.value='';}
+ catch(e){msg.textContent='❌ '+e.message;}
+ finally{btn.disabled=false;}
+}
+$('#authorBindSubmit').onclick=()=>submitAuthorCode('authorBindCode','authorBindMessage','authorBindSubmit');
+$('#profileAuthorSubmit').onclick=()=>submitAuthorCode('profileAuthorCode','profileAuthorMessage','profileAuthorSubmit');
+['authorBindCode','profileAuthorCode'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{if(e.key==='Enter')$('#'+(id==='authorBindCode'?'authorBindSubmit':'profileAuthorSubmit')).click()}));
+async function submitPromoCode(inputId,messageId,buttonId){
+ ac();const input=$('#'+inputId),m=$('#'+messageId),btn=$('#'+buttonId),c=input.value.trim().toUpperCase();
+ if(!c){m.textContent='Введи промокод.';return;}
+ if(c==='HODILDABRODILDA'){m.textContent='ℹ️ Этот код заменён. Используй BRODILDA.';return;}
+ btn.disabled=true;
+ try{
+  if(authUser){
+   const result=await cloudRpc('fantik_redeem_promo',{p_code:c,p_request_id:crypto.randomUUID()});
+   await refreshEconomy();
+   const names=(result.items||[]).map(x=>x.item_name).join(', ');
+   let message;if(result.reward_type==='pandora_items')message='Заказ доставлен: '+names;else if(result.reward_type==='grandma_boost')message='Бонус +'+fmt(result.reward_amount)+' 🍬. Бабушка скоро появится!';else message='Бонус +'+fmt(result.reward_amount)+' 🍬';
+   m.textContent='✅ '+message;input.value='';recordAction('promo','Активирован промокод '+c,Number(result.reward_amount)||0);addXP(10);
+   if(result.reward_type==='lottery')celebrate(Number(result.reward_amount)||0,Number(result.reward_amount)||0);else coin();save();
+   return;
+  }
+  if(!PR[c]){m.textContent='❌ Нет такого кода';lose();return;}
+  if(ACC.promos.includes(c)){m.textContent='⚠️ Этот код уже активирован на твоём аккаунте';return;}
+  ACC.promos.push(c);const result=PR[c].run();m.textContent='✅ '+result;input.value='';recordAction('promo','Активирован промокод '+c);addXP(10);save();
+ }catch(e){m.textContent='❌ '+e.message;}
+ finally{btn.disabled=false;}
+}
+$('#pgo').onclick=()=>submitPromoCode('pin','pmsg','pgo');
+$('#profilePromoSubmit').onclick=()=>submitPromoCode('profilePromoCode','profilePromoMessage','profilePromoSubmit');
+['pin','profilePromoCode'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{if(e.key==='Enter')$('#'+(id==='pin'?'pgo':'profilePromoSubmit')).click()}));
 
 
 /* ===== Secure administrator tools ===== */
