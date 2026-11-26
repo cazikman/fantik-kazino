@@ -110,7 +110,6 @@ label{min-width:0}h3,h4{overflow-wrap:anywhere}#rmsg{font-size:13px;line-height:
 /* — живой сайт: боты — */
 .onl{font-size:13px;color:#7dff9f;background:var(--card);padding:6px 10px;border-radius:20px;white-space:nowrap}
 #feed{display:grid;gap:4px;padding:0 14px 10px}
-#localCasinoNote{margin:0 14px 10px;padding:9px 12px;border:1px solid #b8860b;border-radius:10px;background:#3b2a7a;color:#ffe9a6;font-size:12px;line-height:1.35}
 .fe{--rc:#9aa0b8;font-size:12px;padding:5px 10px;border-radius:8px;background:var(--card);border-left:4px solid var(--rc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:fin .4s}
 .fe.t1{--rc:#4b8dff}.fe.t2{--rc:#a24bff}.fe.t3{--rc:#ff4bd2}.fe.t4{--rc:#ffc933}
 @keyframes fin{from{opacity:0;transform:translateY(-6px)}}
@@ -118,7 +117,7 @@ label{min-width:0}h3,h4{overflow-wrap:anywhere}#rmsg{font-size:13px;line-height:
 #rlive,#dlive{display:grid;gap:3px;max-height:230px;overflow-y:auto}
 .lr{display:grid;grid-template-columns:minmax(0,1.4fr) auto minmax(0,1fr);gap:6px;font-size:12px;padding:4px 6px;border-radius:6px;background:#0b052466}
 .lr span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.lr span:last-child{text-align:right}
-.lr.w{background:#0c4a2a88;color:#9dffc0}.lr.l{opacity:.6;background:#4a0c1c66}
+.lr.w{background:#0c4a2a88;color:#9dffc0}.lr.l{opacity:.6;background:#4a0c1c66}.lr.me{outline:1px solid var(--ac);background:#493b7a88;color:#fff}.col.selected{outline:3px solid #fff;outline-offset:2px;filter:brightness(1.18)}
 button:hover{filter:brightness(1.15)}.ci:hover{transform:translateY(-2px)}
 /* — компьютеры — */
 @media(min-width:900px){
@@ -737,7 +736,6 @@ header>.bal{grid-area:balance;white-space:nowrap}
 <div class="header-actions"><button id="gran">👵 подарок +10 000</button><button id="me"></button></div></header>
 <div id="eventbar" hidden><div><b id="eventTitle">🎉 Событие</b><small id="eventDesc"></small></div><div class="event-clock"><span id="eventTimer"></span><button id="eventClaim" disabled>Забрать</button></div></div>
 <nav><button class="tab on" data-t="rocket">🚀 Ракета</button><button class="tab" data-t="double">🎲 Дабл</button><button class="tab" data-t="cases">📦 Кейсы</button><button class="tab" data-t="up">⬆️ Развитие</button><button class="tab" data-t="inv">🎒 Склад</button><button class="tab" data-t="shop">🛍️ Магазин</button><button class="tab" data-t="profile">👤 Профиль</button><button class="tab" id="adminTab" data-t="admin" title="Доступно только подтверждённому администратору Supabase" hidden>👑 Админ-панель</button><button class="tab" data-t="about">ℹ️ О проекте</button><button id="mute">🔊</button></nav>
-<div id="localCasinoNote" role="note">⚠️ ТЕСТОВЫЙ РЕЖИМ: автоматические раунды рассчитываются в этом браузере. Они не синхронизированы между устройствами; тестовые изменения баланса не записываются в облачную экономику.</div>
 <aside id="feed" aria-label="Лента активности игроков"><div class="feed-head"><b>ОТКРЫТИЯ ИГРОКОВ</b></div><div id="feedList"></div></aside>
 <main>
 <section id="rocket">
@@ -1088,17 +1086,17 @@ addEventListener('keydown',e=>{if(e.key=='Escape'&&mon)closeMega()});
 /* ---------- ui ---------- */
 function getBet(sec){const v=Math.floor(+$(sec+" .bet").value);if(!(v>=1)){toast("Введи ставку");return 0}if(v>bal){toast("Не хватает фантиков — сходи к бабушке 👵");return 0}return v}
 $$(".q button").forEach(b=>b.onclick=()=>{const i=b.closest("section").querySelector(".bet"),m=b.dataset.m;i.value=m=="max"?Math.max(1,Math.floor(bal)):Math.max(1,Math.floor(i.value*m))});
-$$(".tab").forEach(b=>b.onclick=()=>{$$(".tab").forEach(x=>x.classList.toggle("on",x==b));$$("main section").forEach(s=>s.hidden=s.id!=b.dataset.t);if(b.dataset.t=="double")setPos(DS.i,DS.j,false);else if(b.dataset.t=="rocket")rdraw()});
+$$(".tab").forEach(b=>b.onclick=()=>{if(b.dataset.t!=="double")stopDoubleAudio();$$(".tab").forEach(x=>x.classList.toggle("on",x==b));$$("main section").forEach(s=>s.hidden=s.id!=b.dataset.t);if(b.dataset.t=="double")setPos(DS.i,DS.j,false);else if(b.dataset.t=="rocket")rdraw()});
 $("#mute").onclick=()=>{muted=!muted;$("#mute").textContent=muted?"🔇":"🔊";if(muted&&bus)bus.gain.value=0;if(ME){ACC.settings=ACC.settings||{};ACC.settings.muted=muted;queueSave()}};
 $("#gran").onclick=()=>claimGrandma();
 /* ---------- rocket ---------- */
 const rc=$("#rc"),dpr=Math.min(1.5,devicePixelRatio||1);
 const MAX_ROCKET_MULTIPLIER=1000,MAX_ROCKET_TIME=Math.log(MAX_ROCKET_MULTIPLIER)/.15;
-const AUTO_CASINO_MODE=true;
+const AUTO_ROUND_MODE=true; // Автоматический цикл раундов; ставки и результаты авторизованных игроков подтверждает Supabase.
 function paintLocalBalance(){$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal)}
-function changeLocalBalance(delta){bal=Math.max(0,Math.floor(bal+delta));paintLocalBalance();if(!authUser&&typeof ME!=='undefined'&&ME)queueSave();}
-const AUTO_ROCKET={phase:'betting',endsAt:0,queuedBet:0,started:false};
-const AUTO_DOUBLE={phase:'betting',endsAt:0,started:false};
+function changeLocalBalance(delta){if(authUser){console.warn('Локальное изменение облачного баланса заблокировано');return false}bal=Math.max(0,Math.floor(bal+delta));paintLocalBalance();if(typeof ME!=='undefined'&&ME)queueSave();return true;}
+const AUTO_ROCKET={phase:'betting',endsAt:0,queuedBet:0,started:false,launching:false};
+const AUTO_DOUBLE={phase:'betting',endsAt:0,started:false,requestId:null};
 const R={on:false,bet:0,cashed:false,crash:1,m:1,t:0,auto:0,t0:0,serverRoundId:null,serverT:0,serverSyncMono:0,pollBusy:false,lastPoll:0,lastServerSync:0,pollDelay:1000,syncStale:false,settled:false,cashPending:false,rafId:0,lastPaint:0,lastBotTick:0,lastDrawKey:''};
 function rsz(){rc.width=Math.max(1,Math.floor(rc.clientWidth*dpr));rc.height=Math.max(1,Math.floor(rc.clientHeight*dpr))}
 function rdraw(){rsz();draw(R.t,R.m,!R.on&&R.m>1&&R.crash==R.m)}
@@ -1180,8 +1178,9 @@ async function cash(m){
   }catch(e){toast('Сервер не принял вывод: '+e.message);return}
   finally{R.cashPending=false;}
  }
+ if(authUser){toast('Раунд не подтверждён сервером. Локальная выплата заблокирована.');return}
  m=Math.max(1,Math.min(Number(R.crash)||1,Math.floor(m*100)/100));
- const pay=Math.floor(R.bet*m);R.cashed=true;if(AUTO_CASINO_MODE&&authUser)changeLocalBalance(pay);else setBal(pay);ACC.pendingRocket=null;ACC.stats=ACC.stats||{};
+ const pay=Math.floor(R.bet*m);R.cashed=true;setBal(pay);ACC.pendingRocket=null;ACC.stats=ACC.stats||{};
  ACC.stats.rocketWins=(ACC.stats.rocketWins||0)+1;recordAction('rocket',`Вывод на ${m.toFixed(2)}x`,pay);addXP(Math.max(5,Math.floor(pay/500)));
  const pr=pay-R.bet;$('#rmsg').textContent='Выведено на '+m.toFixed(2)+'x: '+(pr>=0?'+':'')+fmt(pr);
  $('#rgo').classList.remove('pulse');$('#rgo').disabled=true;$('#rgo').textContent='Смотрим, где упадёт…';celebrate(pay,pr);
@@ -1219,6 +1218,7 @@ async function pollCloudRocket(){
 }
 function resumeCloudRocket(active){
  if(!active?.round_id||R.on)return;
+ AUTO_ROCKET.phase='running';AUTO_ROCKET.endsAt=0;
  Object.assign(R,{on:true,bet:Number(active.bet),cashed:false,m:1,t:0,serverT:0,serverSyncMono:performance.now(),crash:1000,auto:0,t0:performance.now(),serverRoundId:active.round_id,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Проверяем состояние активного раунда на сервере…';
  $('#rgo').classList.add('pulse');$('#rgo').disabled=false;$('#rgo').textContent='ПРОВЕРКА СЕРВЕРНОГО РАУНДА…';
@@ -1233,16 +1233,16 @@ function rcrash(){
  chip('#rhist',R.crash.toFixed(2)+'x',R.crash<2?'lo':R.crash<10?'mid':'hi');
  if(R.bet>0&&!R.cashed){$('#rmsg').textContent='💥 Улетела на '+R.crash.toFixed(2)+'x. −'+fmt(R.bet)+' 🍬';lose()}
  else $('#rmsg').textContent='Раунд завершён на '+R.crash.toFixed(2)+'x';
- $('#rgo').classList.remove('pulse');$('#rgo').disabled=false;$('#rgo').textContent=AUTO_CASINO_MODE?'ПРИЁМ СТАВОК…':'СТАРТ 🚀';
- if(AUTO_CASINO_MODE){AUTO_ROCKET.phase='intermission';AUTO_ROCKET.endsAt=Date.now()+3500;AUTO_ROCKET.queuedBet=0;}
+ $('#rgo').classList.remove('pulse');$('#rgo').disabled=false;$('#rgo').textContent=AUTO_ROUND_MODE?'ПРИЁМ СТАВОК…':'СТАРТ 🚀';
+ if(AUTO_ROUND_MODE){AUTO_ROCKET.phase='intermission';AUTO_ROCKET.endsAt=Date.now()+3500;AUTO_ROCKET.queuedBet=0;}
 }
 $('#rgo').onclick=async()=>{
  ac();
- if(AUTO_CASINO_MODE){
+ if(AUTO_ROUND_MODE){
   if(AUTO_ROCKET.phase==='betting'){
    if(AUTO_ROCKET.queuedBet){toast('Ставка уже принята на следующий раунд');return}
    const b=getBet('#rocket');if(!b)return;
-   changeLocalBalance(-b);AUTO_ROCKET.queuedBet=b;
+   if(!authUser)changeLocalBalance(-b);AUTO_ROCKET.queuedBet=b;live($('#rlive'),RB);$('#rcnt').textContent='('+(RB.length+rocketPlayerRows().length)+')';
    $('#rgo').textContent='СТАВКА ПРИНЯТА ✓';$('#rmsg').textContent='Ставка '+fmt(b)+' 🍬 принята. Ждём общий старт этого браузера.';
    return;
   }
@@ -1270,10 +1270,10 @@ strip.innerHTML=Array.from({length:132},(_,i)=>{const n=ORD[i%ORD.length],c=col(
 let DS={i:22,j:0};
 function setPos(i,j,anim){const W=$('.wheel').clientWidth||360;if(!anim)strip.style.transition='none';strip.style.transform=`translateX(${-(i*CW+CW/2+j-W/2)}px)`;DS={i,j}}
 setPos(22,0,false);addEventListener('resize',()=>setPos(DS.i,DS.j,false));
-const D={b:{b:0,g:0,y:0},busy:false,current:null};let dRevealT=0;
+const D={b:{b:0,g:0,y:0},busy:false,current:null};let dRevealT=0,selectedDoubleColor=null,doubleAudioBus=null,doubleAudioStopTimer=0;function playDoubleSpinAudio(){if($("#double").hidden||muted)return;const a=ac(),g=a.createGain(),previous=dest;g.gain.value=1;g.connect(a.destination);dest=g;try{noise(3.2,.07);tone(200,3.2,"sine",.055,0,60)}finally{dest=previous}doubleAudioBus=g;clearTimeout(doubleAudioStopTimer);doubleAudioStopTimer=setTimeout(()=>{if(doubleAudioBus===g){try{g.disconnect()}catch(e){}doubleAudioBus=null}},3800)}function stopDoubleAudio(){if(!doubleAudioBus||!AC)return;try{doubleAudioBus.gain.cancelScheduledValues(AC.currentTime);doubleAudioBus.gain.setTargetAtTime(0,AC.currentTime,.015)}catch(e){}clearTimeout(doubleAudioStopTimer);const g=doubleAudioBus;doubleAudioBus=null;doubleAudioStopTimer=setTimeout(()=>{try{g.disconnect()}catch(e){}},120)}
 function upB(){for(const c in D.b)$('#b-'+c).textContent=D.b[c]?fmt(D.b[c]):''}
 function payoutDouble(round){return (round.wagers[round.color]||0)*D_COLORS[round.color].coef*round.multiplier}
-function settleDouble(round,offline=false){if(!round||!ACC)return;const total=Object.values(round.wagers).reduce((a,b)=>a+b,0),pay=payoutDouble(round),profit=pay-total;if(round.serverBalance!==undefined){bal=Math.max(0,Math.floor(Number(round.serverBalance)||0));}else{bal=Math.max(0,bal+pay)}$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingDouble=null;ACC.stats=ACC.stats||{};ACC.stats.doubleRounds=(ACC.stats.doubleRounds||0)+1;if(profit>0)ACC.stats.doubleWins=(ACC.stats.doubleWins||0)+1;recordAction('double',`Дабл: ${D_COLORS[round.color].label}${round.multiplier>1?' · множитель ×'+round.multiplier:''}`,pay);if(profit>0)publishActivity(crypto.randomUUID(),'double','выиграл в Дабл',`${D_COLORS[round.color].label}${round.multiplier>1?' · ×'+round.multiplier:''}`,pay);addXP(Math.max(8,Math.floor(total/100)));if(!offline){chip('#dhist',D_COLORS[round.color].mark,round.color);D.b={b:0,g:0,y:0};D.busy=false;D.current=null;upB();$('#dgo').disabled=false;$('#dgo').textContent='КРУТИТЬ 🎲';$('#dmult').hidden=true;if(profit>0)celebrate(pay,profit);else{toast(`Выпало ${D_COLORS[round.color].label}${profit<0?' · −'+fmt(-profit):''}`);lose()}}else toast(`Незавершённый раунд Дабла восстановлен: ${D_COLORS[round.color].label}`);save();}
+function settleDouble(round,offline=false){if(!round||!ACC)return;const total=Object.values(round.wagers).reduce((a,b)=>a+b,0),pay=payoutDouble(round),profit=pay-total;if(round.serverBalance!==undefined){bal=Math.max(0,Math.floor(Number(round.serverBalance)||0));}else{bal=Math.max(0,bal+pay)}$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingDouble=null;ACC.stats=ACC.stats||{};ACC.stats.doubleRounds=(ACC.stats.doubleRounds||0)+1;if(profit>0)ACC.stats.doubleWins=(ACC.stats.doubleWins||0)+1;recordAction('double',`Дабл: ${D_COLORS[round.color].label}${round.multiplier>1?' · множитель ×'+round.multiplier:''}`,pay);if(profit>0)publishActivity(crypto.randomUUID(),'double','выиграл в Дабл',`${D_COLORS[round.color].label}${round.multiplier>1?' · ×'+round.multiplier:''}`,pay);addXP(Math.max(8,Math.floor(total/100)));if(!offline){chip('#dhist',D_COLORS[round.color].mark,round.color);D.b={b:0,g:0,y:0};D.busy=false;D.current=null;upB();$('#dgo').disabled=false;$('#dgo').textContent='КРУТИТЬ 🎲';$('#dmult').hidden=true;if(profit>0){if(!$('#double').hidden)celebrate(pay,profit);else toast('Дабл: выигрыш +'+fmt(profit)+' 🍬')}else{toast(`Выпало ${D_COLORS[round.color].label}${profit<0?' · −'+fmt(-profit):''}`);if(!$('#double').hidden)lose()}}else toast(`Незавершённый раунд Дабла восстановлен: ${D_COLORS[round.color].label}`);save();}
 function settlePendingDouble(round){
  if(!round)return;
  if(round.rulesVersion===2){settleDouble(round,true);return}
@@ -1284,23 +1284,42 @@ function settlePendingDouble(round){
  round.rulesVersion=2;
  settleDouble(round,true);
 }
-$$('.col').forEach(btn=>btn.onclick=()=>{ac();if(D.busy)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting'){toast('Ставки закрыты до следующего раунда');return}const b=getBet('#double');if(!b)return;const staged=Object.values(D.b).reduce((a,v)=>a+v,0);if(staged+b>bal){toast('Сумма ставок превышает баланс');return}changeLocalBalance(-b);D.b[btn.dataset.c]+=b;ACC.stagedDouble={...D.b};save();upB();tone(660,.06,'square',.1)});
-$('#dclr').onclick=()=>{if(D.busy)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting')return toast('Ставки уже закрыты');const refund=Object.values(D.b).reduce((a,b)=>a+b,0);changeLocalBalance(refund);D.b={b:0,g:0,y:0};ACC.stagedDouble=null;save();upB()};
-$('#dgo').onclick=()=>{if(AUTO_CASINO_MODE){toast(AUTO_DOUBLE.phase==='betting'?'Раунд запустится автоматически после закрытия ставок':'Дабл работает автоматически');return}};
-function autoDoubleSpin(){
+$$('.col').forEach(btn=>btn.onclick=()=>{if(D.busy||AUTO_DOUBLE.phase!=='betting'){toast('Ставки закрыты до следующего раунда');return}selectedDoubleColor=btn.dataset.c;$$('.col').forEach(x=>x.classList.toggle('selected',x===btn));$('#dgo').disabled=false;$('#dgo').textContent='ПОСТАВИТЬ';$('#dphase').textContent='Выбрано: '+D_COLORS[selectedDoubleColor].label+'. Нажми «Поставить».'});
+$('#dclr').onclick=()=>{if(D.busy||AUTO_DOUBLE.phase!=='betting')return toast('Ставки уже закрыты');const refund=Object.values(D.b).reduce((a,b)=>a+b,0);if(refund&&!authUser)changeLocalBalance(refund);D.b={b:0,g:0,y:0};AUTO_DOUBLE.requestId=null;selectedDoubleColor=null;$$('.col').forEach(x=>x.classList.remove('selected'));ACC.stagedDouble=null;save();upB();live($('#dlive'),DB,1)};
+$('#dgo').onclick=()=>{if(AUTO_DOUBLE.phase!=='betting'||D.busy){toast('Приём ставок закрыт');return}if(!selectedDoubleColor){toast('Сначала выбери цвет ставки');return}const b=getBet('#double');if(!b)return;const staged=Object.values(D.b).reduce((a,v)=>a+v,0);if(staged+b>bal){toast('Сумма ставок превышает баланс');return}if(!authUser)changeLocalBalance(-b);if(!Object.values(D.b).some(v=>v>0))AUTO_DOUBLE.requestId=crypto.randomUUID();D.b[selectedDoubleColor]+=b;ACC.stagedDouble={...D.b};save();upB();live($('#dlive'),DB,1);$('#dgo').textContent='ПОСТАВИТЬ ЕЩЁ';$('#dphase').textContent='Ставка '+fmt(b)+' 🍬 поставлена на '+D_COLORS[selectedDoubleColor].label;};
+async function autoDoubleSpin(){
  const wagers={...D.b},total=Object.values(wagers).reduce((a,b)=>a+b,0);
- const n=Math.floor(rnd()*12),o=ORD.indexOf(n),winning=col(n),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1,j=(rnd()-.5)*36;
- const round={id:'local-d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:winning,multiplier,wagers};
- D.busy=true;D.current=round;AUTO_DOUBLE.phase='running';dbStart();
- ACC.stagedDouble=null;ACC.pendingDouble=null;save();
+ D.busy=true;D.current=null;AUTO_DOUBLE.phase='running';dbStart();
  $('#dphase').textContent='Раунд идёт · ставки закрыты';$('#dgo').disabled=true;$('#dgo').textContent='РАУНД ИДЁТ…';
- $('#dmult').hidden=true;clearTimeout(dRevealT);if(multiplier>1)dRevealT=setTimeout(()=>{$('#dmult').textContent='✨ СЛУЧАЙНЫЙ МНОЖИТЕЛЬ ×2';$('#dmult').hidden=false;$('#dmult').classList.remove('reveal');void $('#dmult').offsetWidth;$('#dmult').classList.add('reveal');},DOUBLE_CONFIG.revealDelay);
- strip.style.transition='transform 3.2s cubic-bezier(.12,.6,.1,1)';setPos(108+o,j,true);noise(3.2,.07);tone(200,3.2,'sine',.055,0,60);
- setTimeout(()=>{
-  setPos(12+o,j,false);dbEnd(winning);
-  if(total>0)settleDouble(round,false);else{D.b={b:0,g:0,y:0};D.busy=false;D.current=null;upB();$('#dmult').hidden=true}
-  AUTO_DOUBLE.phase='intermission';AUTO_DOUBLE.endsAt=Date.now()+2800;$('#dgo').disabled=true;$('#dgo').textContent='СЛЕДУЮЩИЙ РАУНД…';
- },3400);
+ let round;
+ try{
+  if(authUser&&total>0){
+   const requestId=AUTO_DOUBLE.requestId||(AUTO_DOUBLE.requestId=crypto.randomUUID());
+   const result=await cloudRpc('fantik_play_double',{p_wagers:wagers,p_request_id:requestId});
+   const slot=Number(result?.slot),color=String(result?.color||''),multiplier=Number(result?.multiplier),serverBalance=Number(result?.balance);
+   if(!Number.isInteger(slot)||slot<0||slot>11||!D_COLORS[color]||!Number.isFinite(multiplier)||multiplier<1||!Number.isFinite(serverBalance))throw new Error('Сервер вернул неполный результат Дабла');
+   round={id:result.round_id,rulesVersion:2,n:slot,color,multiplier,wagers,serverBalance};
+   AUTO_DOUBLE.requestId=null;
+   bal=Math.max(0,Math.floor(serverBalance));$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);
+  }else{
+   const n=Math.floor(rnd()*12),winning=col(n),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1;
+   round={id:'local-d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:winning,multiplier,wagers};
+  }
+  const n=round.n,o=ORD.indexOf(n),j=(rnd()-.5)*36,winning=round.color,multiplier=round.multiplier;
+  if(o<0)throw new Error('Сервер вернул неизвестный сектор Дабла');
+  D.current=round;ACC.stagedDouble=null;ACC.pendingDouble=null;save();
+  $('#dmult').hidden=true;clearTimeout(dRevealT);if(multiplier>1)dRevealT=setTimeout(()=>{$('#dmult').textContent='✨ СЛУЧАЙНЫЙ МНОЖИТЕЛЬ ×2';$('#dmult').hidden=false;$('#dmult').classList.remove('reveal');void $('#dmult').offsetWidth;$('#dmult').classList.add('reveal');},DOUBLE_CONFIG.revealDelay);
+  $('#dgo').textContent='КРУТИТСЯ…';strip.style.transition='transform 3.2s cubic-bezier(.12,.6,.1,1)';setPos(108+o,j,true);playDoubleSpinAudio();
+  setTimeout(()=>{
+   setPos(12+o,j,false);dbEnd(winning);
+   if(total>0)settleDouble(round,false);else{D.b={b:0,g:0,y:0};D.busy=false;D.current=null;upB();$('#dmult').hidden=true}
+   AUTO_DOUBLE.phase='intermission';AUTO_DOUBLE.endsAt=Date.now()+2800;$('#dgo').disabled=true;$('#dgo').textContent='СЛЕДУЮЩИЙ РАУНД…';
+  },3400);
+ }catch(e){
+  stopDoubleAudio();D.busy=false;D.current=null;AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=Date.now()+5000;
+  $('#dgo').disabled=false;$('#dgo').textContent='ПОСТАВИТЬ ЕЩЁ';$('#dphase').textContent='⚠️ Сервер не подтвердил раунд. Ставки сохранены для повторной попытки.';
+  toast('Дабл не запущен: '+e.message);
+ }
 }
 /* ===== конфеты, кейсы, склад, апгрейдер ===== */
 /* название|цена в ₽|оценка|эмодзи|теги (u США, r Россия, s кислые, c шоколад, h леденцы, g жевательные, n ностальгия, o хэллоуин) */
@@ -1551,7 +1570,7 @@ function botEvt(){const n=pick(BN),a=pick(BA),x=rnd();let t,p;
  feed(t,p);setTimeout(botEvt,2500+rnd()*3500)}
 function mkBot(L){let n,i=0;do{n=pick(BN)}while(L.some(b=>b.n==n)&&++i<20);return{n,a:pick(BA),b:Math.round(Math.pow(10,1.7+rnd()*2.1)/10)*10,st:0}}
 const tg=()=>Math.round((rnd()<.15?5+rnd()*25:1.1-Math.log(rnd())*1.1)*100)/100,dc=()=>pick(['b','b','b','b','b','b','g','g','g','g','g','y']);
-function live(el,L,dbl){const html=[...L].sort((a,b)=>b.b-a.b).map(b=>`<div class='lr ${b.st==1?'w':b.st==2?'l':''}'><span>${b.a} ${b.n}</span><span>${dbl?{b:'🔵',g:'🟢',y:'🟡'}[b.c]+' ':''}🍬 ${fmt(b.b)}</span><span>${b.st==1?(dbl?'':'x'+b.t.toFixed(2)+' ')+'+'+fmt(b.w-b.b):b.st==2?'−'+fmt(b.b):'ставка'}</span></div>`).join('');if(el.dataset.lastMarkup!==html){el.innerHTML=html;el.dataset.lastMarkup=html}}
+function rocketPlayerRows(){const name=ME?.n||'Вы',avatar=ME?.a||'👤',queued=Math.max(0,Number(AUTO_ROCKET.queuedBet)||0);if(queued)return[{a:avatar,n:'Вы · '+name,b:queued,st:0,me:true}];if(R.bet>0)return[{a:avatar,n:'Вы · '+name,b:R.bet,st:R.cashed?1:(R.on?0:2),t:R.m||1,w:R.cashed?Math.floor(R.bet*(R.m||1)):0,me:true}];return[]}function doublePlayerRows(){const name=ME?.n||'Вы',avatar=ME?.a||'👤';return Object.entries(D.b).filter(([,v])=>Number(v)>0).map(([c,v])=>({a:avatar,n:'Вы · '+name,b:Number(v),c,st:0,me:true}))}function live(el,L,dbl){const own=el.id==='rlive'?rocketPlayerRows():el.id==='dlive'?doublePlayerRows():[];const html=[...L,...own].sort((a,b)=>b.b-a.b).map(b=>`<div class='lr ${b.st==1?'w':b.st==2?'l':''}${b.me?' me':''}'><span>${b.a} ${b.n}</span><span>${dbl?{b:'🔵',g:'🟢',y:'🟡'}[b.c]+' ':''}🍬 ${fmt(b.b)}</span><span>${b.st==1?(dbl?'':'x'+(b.t||1).toFixed(2)+' ')+'+'+fmt((b.w||b.b)-b.b):b.st==2?'−'+fmt(b.b):'ставка'}</span></div>`).join('');if(el.dataset.lastMarkup!==html){el.innerHTML=html;el.dataset.lastMarkup=html}}
 function botTick(m){let ch=0;for(const b of RB)if(!b.st&&m>=b.t){b.st=1;b.w=Math.floor(b.b*b.t);ch=1;if(b.w-b.b>=3000)feed(`${b.a} ${b.n} вывел ${fmt(b.w)} 🍬 на ${b.t.toFixed(2)}x`,b.w)}if(ch)live($('#rlive'),RB)}
 function botStart(){while(RB.length<6)RB.push(mkBot(RB));RB.forEach(b=>{b.t=tg();b.st=0});RE=0;live($('#rlive'),RB)}
 function botEnd(){RB.forEach(b=>{if(!b.st)b.st=2});RE=Date.now();live($('#rlive'),RB)}
@@ -1559,14 +1578,44 @@ function dbStart(){while(DB.length<6){const b=mkBot(DB);b.c=dc();DB.push(b)}DE=0
 function dbEnd(w){DB.forEach(b=>{if(b.c==w){b.st=1;b.w=b.b*(w=='y'?14:2);if(b.w>=8000)feed(`${b.a} ${b.n} сорвал ${fmt(b.w)} 🍬 в дабле`,b.w)}else b.st=2});DE=Date.now();live($('#dlive'),DB,1)}
 for(let i=0;i<5;i++){RB.push(mkBot(RB));const b=mkBot(DB);b.c=dc();DB.push(b)}
 
+async function startAutoRocketRound(bet,now){
+ if(AUTO_ROCKET.launching)return;
+ AUTO_ROCKET.launching=true;
+ try{
+  let serverRoundId=null,startedAt=now,startingBalance=bal;
+  const crash=authUser&&bet>0?1000:Math.max(1,Math.min(1000,Math.floor(97/(1-rnd()))/100));
+  if(authUser&&bet>0){
+   const result=await cloudRpc('fantik_rocket_start',{p_bet:bet});
+   if(!result?.round_id)throw new Error('Сервер не вернул идентификатор раунда');
+   serverRoundId=result.round_id;startedAt=Date.parse(result.started_at)||Date.now();startingBalance=Number(result.balance);
+   if(!Number.isFinite(startingBalance))throw new Error('Сервер не вернул баланс после ставки');
+  }
+  const elapsed=Math.max(0,(Date.now()-startedAt)/1000);
+  Object.assign(R,{on:true,bet:Math.max(0,Number(bet)||0),cashed:!bet,m:1,t:elapsed,serverT:elapsed,serverSyncMono:performance.now(),crash,auto:+$('#rauto').value||0,t0:performance.now()-elapsed*1000,serverRoundId,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
+  if(authUser){
+   if(serverRoundId){bal=Math.max(0,Math.floor(startingBalance));paintLocalBalance();ACC.pendingRocket=null;}
+   else ACC.pendingRocket=null;
+  }else if(bet){ACC.pendingRocket={bet,crash:R.crash,auto:R.auto,startedAt:Date.now()};}
+  if(bet){ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;$('#rmsg').textContent='🚀 Раунд начался! Твоя ставка: '+fmt(bet)+' 🍬';$('#rgo').textContent='ЗАБРАТЬ ВЫИГРЫШ';$('#rgo').classList.add('pulse');}
+  else{$('#rmsg').textContent='Раунд начался — можно наблюдать';$('#rgo').textContent='РАУНД ИДЁТ';}
+  $('#rgo').disabled=!bet;$('#mult').classList.remove('dead');botStart();save();tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
+ }catch(e){
+  if(authUser){
+   try{const state=await refreshEconomy();if(state?.active_rocket?.round_id){resumeCloudRocket(state.active_rocket);return;}}catch(syncError){console.warn('Rocket recovery:',syncError.message)}
+  }
+  AUTO_ROCKET.queuedBet=0;AUTO_ROCKET.phase='betting';AUTO_ROCKET.endsAt=Date.now()+5000;R.bet=0;R.on=false;
+  $('#rgo').disabled=false;$('#rgo').textContent='ПОСТАВИТЬ НА РАУНД';$('#rmsg').textContent='⚠️ Сервер не подтвердил ставку. Проверь баланс и повтори попытку.';
+  toast('Ракета не запущена: '+e.message);
+ }finally{AUTO_ROCKET.launching=false;}
+}
 function startAutoCasino(){
- if(!AUTO_CASINO_MODE||AUTO_ROCKET.started)return;
+ if(!AUTO_ROUND_MODE||AUTO_ROCKET.started)return;
  AUTO_ROCKET.started=true;if(R.on&&R.serverRoundId){AUTO_ROCKET.phase='running';AUTO_ROCKET.endsAt=0}else{AUTO_ROCKET.phase='betting';AUTO_ROCKET.endsAt=Date.now()+7000}
  AUTO_DOUBLE.started=true;AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=Date.now()+8000;
- $('#localCasinoNote').hidden=false;
+ $('#rgo').textContent='ПОСТАВИТЬ НА РАУНД';$('#dgo').textContent='ПОСТАВИТЬ';
 }
 setInterval(()=>{
- if(!AUTO_CASINO_MODE||!ME)return;
+ if(!AUTO_ROUND_MODE||!ME)return;
  const now=Date.now();
  if(AUTO_ROCKET.phase==='betting'){
   const left=Math.max(0,Math.ceil((AUTO_ROCKET.endsAt-now)/1000));
@@ -1574,10 +1623,7 @@ setInterval(()=>{
   if(!AUTO_ROCKET.queuedBet)$('#rgo').textContent=`ПОСТАВИТЬ НА РАУНД · ${left}с`;
   if(now>=AUTO_ROCKET.endsAt){
    const bet=AUTO_ROCKET.queuedBet;AUTO_ROCKET.queuedBet=0;AUTO_ROCKET.phase='running';
-   const crash=Math.max(1,Math.min(1000,Math.floor(97/(1-rnd()))/100));
-   Object.assign(R,{on:true,bet,cashed:!bet,m:1,t:0,serverT:0,serverSyncMono:performance.now(),crash,auto:+$('#rauto').value||0,t0:performance.now(),serverRoundId:null,pollBusy:false,lastPoll:0,lastServerSync:now,pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
-   if(bet){ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;$('#rmsg').textContent='🚀 Раунд начался! Твоя ставка: '+fmt(bet)+' 🍬';$('#rgo').textContent='ЗАБРАТЬ ВЫИГРЫШ';$('#rgo').classList.add('pulse');}else{$('#rmsg').textContent='Раунд начался — можно наблюдать';$('#rgo').textContent='РАУНД ИДЁТ';}
-   $('#rgo').disabled=!bet;$('#mult').classList.remove('dead');botStart();save();tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
+   startAutoRocketRound(bet,now);
   }
  }else if(AUTO_ROCKET.phase==='running'){
   if(R.on&&R.bet>0&&!R.cashed){$('#rgo').disabled=false;$('#rgo').textContent='ЗАБРАТЬ '+fmt(R.bet*R.m)+' 🍬'}
@@ -1588,15 +1634,15 @@ setInterval(()=>{
  }
  if(AUTO_DOUBLE.phase==='betting'){
   const left=Math.max(0,Math.ceil((AUTO_DOUBLE.endsAt-now)/1000));
-  $('#dphase').textContent=`🎲 Приём ставок · закрытие через ${left} сек`;
-  $('#dgo').disabled=true;$('#dgo').textContent=`СТАВКИ ЗАКРОЮТСЯ · ${left}с`;
+  if(!D.busy){$('#dphase').textContent=`🎲 Приём ставок · закрытие через ${left} сек`;$('#dgo').disabled=false;if(!selectedDoubleColor)$('#dgo').textContent='ПОСТАВИТЬ';}
   if(now>=AUTO_DOUBLE.endsAt){AUTO_DOUBLE.phase='running';autoDoubleSpin()}
- }else if(AUTO_DOUBLE.phase==='intermission'&&now>=AUTO_DOUBLE.endsAt){
-  AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=now+8000;D.b={b:0,g:0,y:0};upB();$('#dgo').disabled=true;$('#dgo').textContent='СТАВКИ ЗАКРОЮТСЯ · 08с';$('#dphase').textContent='Новый раунд · приём ставок открыт';
- }else if(AUTO_DOUBLE.phase==='running'){$('#dphase').textContent='🎲 Вращение · ставки закрыты'}
+ }else if(AUTO_DOUBLE.phase==='intermission'){
+  const left=Math.max(0,Math.ceil((AUTO_DOUBLE.endsAt-now)/1000));$('#dphase').textContent=`Новый раунд через ${left} сек · ставки закрыты`;$('#dgo').disabled=true;$('#dgo').textContent='ОЖИДАНИЕ РАУНДА…';
+  if(now>=AUTO_DOUBLE.endsAt){AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=now+8000;D.b={b:0,g:0,y:0};selectedDoubleColor=null;$$('.col').forEach(x=>x.classList.remove('selected'));upB();$('#dgo').disabled=false;$('#dgo').textContent='ПОСТАВИТЬ';$('#dphase').textContent='Приём ставок открыт';live($('#dlive'),DB,1)}
+ }else if(AUTO_DOUBLE.phase==='running'){$('#dphase').textContent='🎲 Вращение · ставки закрыты';$('#dgo').disabled=true;$('#dgo').textContent='РАУНД ИДЁТ…'}
 },200);
 setInterval(()=>{
- if(!R.on){if(RE&&Date.now()-RE>4500){RB=[];RE=0}if(!RE&&RB.length<11&&rnd()<.8)RB.push(mkBot(RB));live($('#rlive'),RB);$('#rcnt').textContent='('+RB.length+')'}
+ if(!R.on){if(RE&&Date.now()-RE>4500){RB=[];RE=0}if(!RE&&RB.length<11&&rnd()<.8)RB.push(mkBot(RB));live($('#rlive'),RB);$('#rcnt').textContent='('+(RB.length+rocketPlayerRows().length)+')'}
  if(!D.busy){if(DE&&Date.now()-DE>4500){DB=[];DE=0}if(!DE&&DB.length<11&&rnd()<.8){const b=mkBot(DB);b.c=dc();DB.push(b)}live($('#dlive'),DB,1)}
 },1500);
 setInterval(()=>{ON=Math.max(800,ON+Math.round((rnd()-.5)*50));$('#onl').textContent=fmt(ON)},2500);$('#onl').textContent=fmt(ON);
