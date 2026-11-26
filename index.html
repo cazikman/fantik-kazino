@@ -128,7 +128,7 @@ main{max-width:1100px}header,nav,#feed{max-width:1100px;margin-left:auto;margin-
 header button{padding:7px 10px;font-size:13px}#me{max-width:44vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#gran:disabled{opacity:.7}
 #login{position:fixed;inset:0;z-index:300;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 30%,#3a1370,#0b0524 70%);padding:16px;overflow-y:auto}
 #promo{position:fixed;inset:0;z-index:90;display:grid;place-items:center;background:#000b;padding:16px}
-#login[hidden],#promo[hidden],#authorBind[hidden]{display:none}
+#login[hidden],#promo[hidden],#authorBind[hidden],#authLoginForm[hidden],#passwordRecovery[hidden]{display:none}
 .lcard{width:min(420px,100%);background:var(--card);border:2px solid var(--ac);border-radius:20px;padding:22px;display:grid;gap:12px;box-shadow:0 0 40px #ffc93355;text-align:center}
 .avs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.avs button{font-size:22px;padding:6px 8px;background:#0b0524}.avs button.on{outline:3px solid var(--ac)}
 
@@ -992,7 +992,10 @@ header>.bal{grid-area:balance;white-space:nowrap}
 </section>
 </main>
 <footer>Это шуточная игра: фантики — только виртуальная валюта. Для удобства показан условный курс 10 фантиков = 1 ₽; это не реальные деньги, купить или вывести их нельзя. Прогресс синхронизируется с облачным аккаунтом; локальная копия используется как резервная.<br>Настоящая синхронизация между устройствами требует серверного аккаунта.</footer>
-<div id="login"><div class="lcard"><div class="auth-brand"><img id="authLogo" alt="Фантик-Казино"></div><p class="mut">Облачный аккаунт · вход с любого устройства</p><label>Твой игровой ник<input id="nick" maxlength="16" placeholder="например, Player123" autocomplete="nickname"></label><div class="avs" id="avs"></div><label>Email<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label><label>Пароль<input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Минимум 8 символов"></label><label>Авторский код <span class="mut">(необязательно)</span><input id="registerAuthorCode" maxlength="32" placeholder="Если тебя пригласил автор" autocomplete="off" autocapitalize="characters"></label><p id="lerr" class="mut" role="status">Создай аккаунт или войди. Прогресс будет привязан к уникальному ID, а не только к нику.</p><button id="lgo" class="big">ВОЙТИ 🍬</button><button id="registerBtn" type="button">СОЗДАТЬ АККАУНТ</button><p class="mut">При первой регистрации локальный прогресс с таким же ником будет перенесён в облако, если он есть в этом браузере.</p></div></div>
+<div id="login"><div class="lcard"><div class="auth-brand"><img id="authLogo" alt="Фантик-Казино"></div>
+<div id="authLoginForm"><p class="mut">Облачный аккаунт · вход с любого устройства</p><label>Твой игровой ник<input id="nick" maxlength="16" placeholder="например, Player123" autocomplete="nickname"></label><div class="avs" id="avs"></div><label>Email<input id="authEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@example.com"></label><label>Пароль<input id="authPassword" type="password" minlength="8" autocomplete="current-password" placeholder="Минимум 8 символов"></label><button id="forgotPasswordBtn" type="button">ЗАБЫЛИ ПАРОЛЬ?</button><label>Авторский код <span class="mut">(необязательно)</span><input id="registerAuthorCode" maxlength="32" placeholder="Если тебя пригласил автор" autocomplete="off" autocapitalize="characters"></label><p id="lerr" class="mut" role="status">Создай аккаунт или войди. Прогресс будет привязан к уникальному ID, а не только к нику.</p><button id="lgo" class="big">ВОЙТИ 🍬</button><button id="registerBtn" type="button">СОЗДАТЬ АККАУНТ</button><p class="mut">При первой регистрации локальный прогресс с таким же ником будет перенесён в облако, если он есть в этом браузере.</p></div>
+<div id="passwordRecovery" hidden><h2>🔐 Новый пароль</h2><p class="mut">Ссылка подтверждена. Придумай новый пароль для своего аккаунта.</p><label>Новый пароль<input id="recoveryPassword" type="password" minlength="8" autocomplete="new-password" placeholder="Минимум 8 символов"></label><label>Повтори пароль<input id="recoveryPasswordConfirm" type="password" minlength="8" autocomplete="new-password" placeholder="Повтори новый пароль"></label><p id="recoveryMessage" class="mut" role="status">После сохранения ты войдёшь в свой аккаунт.</p><button id="saveRecoveryPassword" class="big" type="button">СОХРАНИТЬ НОВЫЙ ПАРОЛЬ</button></div>
+</div></div>
 <script>document.getElementById("authLogo").src=document.querySelector("header .logo img").src;</script>
 <div id="promo" hidden><div class="lcard"><b>🎁 Обычный промокод</b><input id="pin" placeholder="Введи промокод с наградой" autocomplete="off" autocapitalize="characters"><button id="pgo" class="big">АКТИВИРОВАТЬ ПРОМОКОД</button><p id="pmsg" class="mut"></p><div class="divider"></div><b>🤝 Есть авторский код?</b><p class="author-note">Привязка автора не выдаёт бонус. Автор будет получать комиссию с твоих ставок и открытий кейсов.</p><button id="openAuthorBind" type="button">ПРИВЯЗАТЬ АВТОРСКИЙ КОД</button><button id="pclose">Закрыть</button></div></div>
 <div id="authorBind" hidden><div class="lcard"><b>🤝 Привязка авторского кода</b><input id="authorBindCode" maxlength="32" placeholder="Введи авторский код" autocomplete="off" autocapitalize="characters"><button id="authorBindSubmit" class="big">ПРИВЯЗАТЬ КОД</button><p id="authorBindMessage" class="mut" role="status"></p><p class="author-note">Код можно привязать только один раз. После привязки изменить автора нельзя.</p><button id="authorBindClose" type="button">Закрыть</button></div></div>
@@ -1673,7 +1676,7 @@ const GR=300000, SAVE_VERSION=3, KEY=n=>'fc_acc_'+String(n).trim().toLowerCase()
 // Supabase client configuration. Fill these two values after creating your Supabase project.
 const SUPABASE_URL = 'https://vftiyvrwvqujqlbthsuj.supabase.co';
 const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_SN0vQ0lHB9IjIa0Qi0BomA_GLw_xyGt';
-let sb=null, authUser=null, cloudSyncTimer=0, cloudSyncBusy=false, cloudSyncAgain=false, cloudErrorShown=false, cloudLastSnapshotUser=null, cloudLastSnapshotJson=null;
+let sb=null, authUser=null, passwordRecoveryMode=false, cloudSyncTimer=0, cloudSyncBusy=false, cloudSyncAgain=false, cloudErrorShown=false, cloudLastSnapshotUser=null, cloudLastSnapshotJson=null;
 const cloudConfigured = () => /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(SUPABASE_URL) && /^(sb_publishable_|eyJ)/.test(SUPABASE_PUBLISHABLE_KEY);
 function cloudStatus(message){
  const st=$('#saveStatus'),card=$('#cloudSaveCard'),title=$('#cloudSaveTitle'),time=$('#cloudSaveTime');
@@ -1793,6 +1796,42 @@ async function completeCloudLogin(user){
   }
  }
 }
+function showPasswordRecovery(){
+ passwordRecoveryMode=true;
+ $('#login').hidden=false;
+ $('#authLoginForm').hidden=true;
+ $('#passwordRecovery').hidden=false;
+ $('#recoveryPassword').value='';
+ $('#recoveryPasswordConfirm').value='';
+ $('#recoveryMessage').textContent='Ссылка подтверждена. Введи новый пароль (не менее 8 символов).';
+}
+async function requestPasswordRecovery(){
+ const email=$('#authEmail').value.trim().toLowerCase(),message=$('#lerr');
+ if(!sb){message.textContent='Подключение к Supabase ещё не готово. Обнови страницу и попробуй снова.';return;}
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){message.textContent='Сначала введи email своего аккаунта.';$('#authEmail').focus();return;}
+ $('#forgotPasswordBtn').disabled=true;message.textContent='Отправляем ссылку для восстановления…';
+ try{
+  const {error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+  if(error)throw error;
+  message.textContent='Если аккаунт с таким email существует, на него отправлена ссылка для восстановления. Проверь входящие и папку «Спам».';
+ }catch(error){message.textContent='Не удалось отправить ссылку: '+friendlyAuthError(error.message);}
+ finally{$('#forgotPasswordBtn').disabled=false;}
+}
+async function saveRecoveredPassword(){
+ const password=$('#recoveryPassword').value,confirmPassword=$('#recoveryPasswordConfirm').value,message=$('#recoveryMessage');
+ if(password.length<8){message.textContent='Пароль должен содержать не менее 8 символов.';return;}
+ if(password!==confirmPassword){message.textContent='Пароли не совпадают.';return;}
+ if(!sb){message.textContent='Нет соединения с Supabase. Обнови страницу и открой ссылку из письма ещё раз.';return;}
+ $('#saveRecoveryPassword').disabled=true;message.textContent='Сохраняем новый пароль…';
+ try{
+  const {data,error}=await sb.auth.updateUser({password});
+  if(error)throw error;
+  passwordRecoveryMode=false;
+  message.textContent='Пароль успешно изменён. Выполняем вход…';
+  await completeCloudLogin(data.user);
+ }catch(error){message.textContent='Не удалось изменить пароль: '+friendlyAuthError(error.message);}
+ finally{$('#saveRecoveryPassword').disabled=false;}
+}
 async function initializeCloudAuth(){
  if(!cloudConfigured()){
    $('#lerr').textContent='Онлайн-вход ещё не настроен. Сначала создай проект Supabase, выполни supabase_setup.sql и вставь URL + Publishable key в начало настроек этого HTML.';
@@ -1801,12 +1840,16 @@ async function initializeCloudAuth(){
  if(!window.supabase?.createClient){$('#lerr').textContent='Не загрузилась библиотека Supabase. Обнови страницу или проверь подключение к CDN.';return;}
  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
  setupActivityFeed();
- const {data,error}=await sb.auth.getSession();
- if(error){$('#lerr').textContent='Ошибка проверки сессии: '+friendlyAuthError(error.message);return;}
- if(data.session?.user){try{await completeCloudLogin(data.session.user);}catch(e){$('#lerr').textContent=friendlyAuthError(e.message);}}
+ // Ссылка Supabase обычно возвращает на сайт с type=recovery в URL hash.
+ if(new URLSearchParams(location.hash.slice(1)).get('type')==='recovery')showPasswordRecovery();
+ // Подписываемся до getSession, чтобы не пропустить PASSWORD_RECOVERY при обработке ссылки.
  sb.auth.onAuthStateChange((event,session)=>{
+   if(event==='PASSWORD_RECOVERY')showPasswordRecovery();
    if(event==='SIGNED_OUT' && !session){authUser=null;location.reload();}
  });
+ const {data,error}=await sb.auth.getSession();
+ if(error){const target=passwordRecoveryMode?$('#recoveryMessage'):$('#lerr');target.textContent='Ошибка проверки сессии: '+friendlyAuthError(error.message);return;}
+ if(data.session?.user&&!passwordRecoveryMode){try{await completeCloudLogin(data.session.user);}catch(e){$('#lerr').textContent=friendlyAuthError(e.message);}}
 }
 async function registerCloudAccount(){
  ac();const n=$('#nick').value.trim(),email=$('#authEmail').value.trim().toLowerCase(),password=$('#authPassword').value,e=$('#lerr');
@@ -1887,7 +1930,7 @@ function login(n,a,user=null,initialAccount=null){if(ME)save();const loaded=read
  if(authUser){ACC.stagedDouble=null;ACC.pendingReward=null;ACC.pendingDouble=null;ACC.pendingRocket=null;D.b={b:0,g:0,y:0};D.current=null;}else{if(ACC.stagedDouble){const refund=Object.values(ACC.stagedDouble).reduce((a,b)=>a+Math.max(0,Number(b)||0),0);bal+=refund;ACC.stagedDouble=null;recordAction('double','Невращённые ставки возвращены после перезагрузки',refund)}if(ACC.pendingReward)awardPendingCase(ACC.pendingReward.id,true);if(ACC.pendingDouble)settlePendingDouble(ACC.pendingDouble);if(ACC.pendingRocket){const pr=ACC.pendingRocket;ACC.pendingRocket=null;if(pr.auto>0&&pr.auto<pr.crash){const payout=Math.floor(pr.bet*pr.auto);bal+=payout;$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.stats.rocketWins=(ACC.stats.rocketWins||0)+1;recordAction('rocket','Автовывод восстановлен после перезагрузки',payout)}else recordAction('rocket','Незавершённый раунд завершён при восстановлении',0);toast('Незавершённый раунд ракеты восстановлен по сохранённому результату');save()}}
  grTick();eventTick();rInv();rUp();renderAccountUpgrades();renderProfile();updateProgress();save();startAutoCasino();if(loaded.recovered)toast('Сохранение восстановлено из резервной копии');else if(loaded.exists&&!loaded.account)toast('⚠️ Старое сохранение повреждено, резервной копии нет. Создан новый профиль.');else toast('Добро пожаловать, '+n+'! 🍬')}
 let AV=ls.get('fc_av')||BA[0];$('#avs').innerHTML=BA.map(a=>`<button data-a='${a}' class='${a==AV?'on':''}'>${a}</button>`).join('');$$('#avs button').forEach(b=>b.onclick=()=>{AV=b.dataset.a;$$('#avs button').forEach(x=>x.classList.toggle('on',x==b))});$('#nick').value=ls.get('fc_last')||'';
-$('#lgo').onclick=signInCloudAccount;$('#registerBtn').onclick=registerCloudAccount;
+$('#lgo').onclick=signInCloudAccount;$('#registerBtn').onclick=registerCloudAccount;$('#forgotPasswordBtn').onclick=requestPasswordRecovery;$('#saveRecoveryPassword').onclick=saveRecoveredPassword;
 ['authEmail','authPassword'].forEach(id=>$('#'+id).addEventListener('keydown',e=>{if(e.key==='Enter')signInCloudAccount()}));
 $('#me').onclick=async()=>{if(R.on||cbusy||ubusy||D.busy){toast('Дождись конца раунда');return}if(!authUser||!sb)return;if(!confirm('Выйти из аккаунта? Незавершённый прогресс будет сохранён.'))return;save();const {error}=await sb.auth.signOut();if(error)toast('Не удалось выйти: '+error.message)};
 setInterval(()=>{if(!ME)return;if(authUser){grTick();eventTick();if(Date.now()-rewardPollAt>20000&&!rewardPollBusy)refreshCloudRewards()}else{grTick();const ev=ACC.timedEvent;if(ev?.active&&Date.now()>=ev.endsAt)eventTick();else if(!ev?.active&&Date.now()>=ev.nextAt)eventTick()}},1000);setInterval(()=>{if(ME)save()},30000);addEventListener('beforeunload',()=>save());$('#eventClaim').onclick=claimTimedEvent;
