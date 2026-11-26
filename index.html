@@ -583,8 +583,9 @@ label{color:#bac7e1}
 /* Компактная верхняя панель главной страницы */
 header{
   display:grid;
-  grid-template-columns:minmax(180px,1fr) minmax(190px,auto) auto auto;
-  grid-template-areas:"brand promo status balance" "actions actions actions actions";
+  position:relative;
+  grid-template-columns:minmax(180px,1fr) auto auto;
+  grid-template-areas:"brand status balance" "promo promo promo" "actions actions actions";
   align-items:center;
   column-gap:14px;
   row-gap:9px;
@@ -597,7 +598,7 @@ header{
 }
 header>.logo{grid-area:brand;min-width:0}
 header>.onl{grid-area:status;white-space:nowrap}
-header>.daily-promo{grid-area:promo}
+header>.daily-promo{grid-area:promo;justify-self:center;width:min(100%,420px)}
 header>.bal{grid-area:balance;white-space:nowrap}
 .header-actions{grid-area:actions;display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0;padding-top:8px;border-top:1px solid #ffffff0d}
 .header-actions button{white-space:nowrap}
@@ -613,8 +614,13 @@ header>.bal{grid-area:balance;white-space:nowrap}
 .auth-brand{display:flex;justify-content:center;align-items:center;width:100%;margin:0 auto 2px;padding:4px 0 10px}
 .auth-brand img{display:block;width:min(100%,310px);max-height:112px;height:auto;object-fit:contain;filter:drop-shadow(0 8px 18px #0007)}
 @media(min-width:700px){
-  header{grid-template-columns:minmax(170px,1fr) minmax(180px,auto) auto auto;grid-template-areas:"brand promo status balance" "brand actions actions actions";row-gap:4px}
+  header{grid-template-columns:minmax(170px,1fr) auto auto;grid-template-areas:"brand status balance" "promo promo promo" "actions actions actions";row-gap:6px}
+  header>.daily-promo{position:static;grid-area:promo;justify-self:center;width:min(100%,420px)}
   .header-actions{border-top:0;padding-top:0}
+}
+@media(min-width:1000px){
+  header{grid-template-areas:"brand status balance" "actions actions actions";row-gap:4px}
+  header>.daily-promo{position:absolute;left:50%;top:50px;transform:translateX(-50%);grid-area:auto;width:max-content;max-width:min(36vw,420px)}
 }
 @media(max-width:599px){
   header{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"brand balance" "promo promo" "status status" "actions actions";gap:7px 8px;padding:10px 11px 9px;border-radius:0 0 13px 13px}
