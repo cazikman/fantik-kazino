@@ -233,7 +233,13 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
 .admin-list-row button.off{background:#5d2735}
 .admin-footnote{font-size:11px;color:var(--mut);margin:12px 0}
 
+.admin-candy-preview{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #423264;border-radius:10px;background:#0d0820;min-width:0}.admin-candy-preview img{width:82px;height:82px;object-fit:contain;flex:none}.admin-candy-preview b,.admin-candy-preview small{display:block;overflow-wrap:anywhere}.admin-candy-preview small{color:var(--mut);font-size:11px;margin-top:4px}
+.admin-stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.admin-stat{min-width:0;padding:10px;border:1px solid #423264;border-radius:10px;background:#0d0820}
+.admin-stat b{display:block;font-size:clamp(17px,2.4vw,24px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.admin-stat small{display:block;margin-top:3px;color:var(--mut);font-size:10px;line-height:1.25}
 .admin-case-actions{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:520px){.admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .admin-case-actions button{font-size:10px;padding:6px 8px}
 .admin-image-preview{width:100%;max-height:150px;object-fit:contain;border:1px dashed #59457f;border-radius:10px;background:#0b071d;padding:6px}
 .admin-collection-row{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px;border-radius:9px;background:#0e0923;border:1px solid #38295a}
@@ -690,6 +696,37 @@ header>.bal{grid-area:balance;white-space:nowrap}
 }
 @media(max-width:360px){.shop-grid{gap:7px}.shop-item{padding:7px}.shop-cats button{padding:8px 11px}}
 
+
+/* Mobile case-gallery performance: reduce paint/compositing work while scrolling. */
+@media (max-width: 760px) {
+  #cgrid { gap: 8px !important; contain: layout style; }
+  #cgrid .cs {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 270px;
+    contain: layout paint style;
+    box-shadow: 0 3px 9px #0003;
+    transition: none !important;
+    transform: none !important;
+    backface-visibility: hidden;
+  }
+  #cgrid .cs:hover,
+  #cgrid .cs:active {
+    transform: none !important;
+    box-shadow: 0 3px 9px #0003;
+  }
+  #cgrid .cs .case-art { box-shadow: none !important; }
+  #cgrid .cs .case-art img {
+    filter: none !important;
+    transform: none !important;
+  }
+  #cgrid .cs::before { opacity: .45; }
+}
+@media (max-width: 420px) {
+  #cgrid { gap: 7px !important; }
+  #cgrid .cs { padding: 6px; border-radius: 12px; }
+  #cgrid .cs .case-art { border-radius: 9px; }
+}
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -803,8 +840,49 @@ header>.bal{grid-area:balance;white-space:nowrap}
  <div class="profile-lower"><div><h3>Достижения</h3><div id="achievementList" class="achievement-list"></div></div><div><h3>Коллекция конфет</h3><div id="collectionInfo" class="collection-info"></div><div id="collectionGrid" class="grid sc collection-grid"></div></div></div><div class="profile-settings"><h3>Настройки</h3><button id="fxToggle">✨ Эффекты: полные</button><label class="sound-setting">🔊 Громкость эффектов <input id="soundVolume" type="range" min="0" max="100" value="70"></label><label class="sound-setting"><input id="quickOpen" type="checkbox"> Быстрое открытие кейсов</label></div><div id="cloudSaveCard" class="cloud-save-card" data-state="idle" role="status" aria-live="polite"><span class="cloud-save-icon">☁️</span><div class="cloud-save-copy"><b id="cloudSaveTitle">Облачное сохранение</b><span id="saveStatus">Проверяем подключение к Supabase…</span><small id="cloudSaveTime">Прогресс автоматически сохраняется в облако.</small></div><span class="cloud-save-check" aria-hidden="true">●</span></div>
 </section>
 <section id="admin" hidden>
- <div class="admin-title"><div><h2>👑 Панель администратора</h2><p class="mut">Управление промокодами и каталогом кейсов. Все изменения проверяются сервером.</p></div><span class="admin-secure">ЗАЩИЩЁННЫЙ ДОСТУП</span></div>
+ <div class="admin-title"><div><h2>👑 Панель администратора</h2><p class="mut">Управление промокодами, кейсами, конфетами и статистикой. Все изменения проверяются сервером.</p></div><span class="admin-secure">ЗАЩИЩЁННЫЙ ДОСТУП</span></div>
  <div class="admin-grid">
+  <div class="admin-card admin-span" id="adminLiveStatsCard">
+   <div class="admin-card-head"><h3>📊 Статистика в реальном времени</h3><span id="adminStatsUpdated" class="mut">Ожидание данных…</span><button type="button" id="adminRefreshStats">Обновить</button></div>
+   <div class="admin-stats-grid">
+    <div class="admin-stat"><b id="adminStatPlayers">—</b><small>Всего игроков</small></div>
+    <div class="admin-stat"><b id="adminStatNewPlayers">—</b><small>Регистраций за 24 ч</small></div>
+    <div class="admin-stat"><b id="adminStatActive">—</b><small>Активны за 5 мин</small></div>
+    <div class="admin-stat"><b id="adminStatEvents">—</b><small>Событий за 1 ч</small></div>
+    <div class="admin-stat"><b id="adminStatOpens">—</b><small>Открытий за 24 ч</small></div>
+    <div class="admin-stat"><b id="adminStatSpent">—</b><small>Потрачено на кейсы за 24 ч</small></div>
+    <div class="admin-stat"><b id="adminStatWallets">—</b><small>Фантиков на балансах</small></div>
+    <div class="admin-stat"><b id="adminStatCustomItems">—</b><small>Авторских конфет</small></div>
+   </div>
+   <div class="admin-item-head"><b>Последние события</b><small id="adminStatsFeedNote">Активность считается по событиям за последние 5 минут; обновление каждые 15 секунд.</small></div>
+   <div id="adminStatsFeed" class="admin-list"><p class="mut">Загрузка…</p></div>
+  </div>
+  <form id="adminCandyForm" class="admin-card admin-case-card">
+   <h3 id="adminCandyFormTitle">🍬 Добавить новую конфету или десерт</h3><input id="adminCandyId" type="hidden" value="">
+   <div class="admin-form-grid">
+    <label>Название<input id="adminCandyName" maxlength="80" required placeholder="Например, Трюфель «Малина»"></label>
+    <label>Справочная цена, ₽<input id="adminCandyPriceRub" type="number" min="1" max="1000000000" step="1" value="100" required></label>
+    <label>Оценка редкости / ценности<select id="adminCandyRating">
+     <option value="1">★ 1 / 10</option><option value="2">★ 2 / 10</option><option value="3">★ 3 / 10</option><option value="4">★ 4 / 10</option><option value="5" selected>★ 5 / 10</option><option value="6">★ 6 / 10</option><option value="7">★ 7 / 10</option><option value="8">★ 8 / 10</option><option value="9">★ 9 / 10</option><option value="10">★ 10 / 10</option>
+    </select></label>
+    <label>Тип предмета<select id="adminCandyType"><option value="candy">🍬 Конфета</option><option value="dessert">🍰 Десерт</option></select></label>
+    <label>Эмодзи<input id="adminCandyEmoji" maxlength="8" value="🍬" required></label>
+    <label class="admin-span">Описание<textarea id="adminCandyDesc" maxlength="240" rows="2" placeholder="Краткое описание для каталога и будущих коллекций"></textarea></label>
+    <label>Изображение (PNG/JPG/WEBP/GIF)<input id="adminCandyImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
+    <label>Или URL изображения<input id="adminCandyImageUrl" type="url" maxlength="2000" placeholder="https://…"></label>
+    <img id="adminCandyImagePreview" class="admin-image-preview" alt="Загруженное изображение" hidden>
+    <div id="adminCandyPreviewCard" class="admin-candy-preview admin-span"><img id="adminCandyArtPreview" alt="Предпросмотр предмета"><div><b id="adminCandyPreviewName">🍬 Новая конфета</b><small id="adminCandyPreviewMeta">Предпросмотр каталога</small></div></div>
+    <p class="admin-editor-note admin-span">Игровая стоимость рассчитывается автоматически по справочной цене и оценке — по формуле текущего каталога. Изображение необязательно: без него будет фирменная SVG-иллюстрация.</p>
+    <p id="adminCandyValuePreview" class="admin-editor-note admin-span">Игровая стоимость: — фантиков</p>
+   </div>
+   <div class="q"><button id="adminCandySubmit" class="big" type="submit">ДОБАВИТЬ ПРЕДМЕТ</button><button id="adminCandyCancel" type="button" hidden>ОТМЕНА</button></div>
+   <p id="adminCandyStatus" class="mut" role="status" aria-live="polite"></p>
+  </form>
+  <div class="admin-card">
+   <div class="admin-card-head"><h3>🍭 Мои добавленные конфеты и десерты</h3><div class="admin-case-actions"><button type="button" id="adminRefreshCandies">Обновить</button><button type="button" id="adminExportCandies">Скачать TXT</button></div></div>
+   <p class="mut">Здесь отображаются только предметы, созданные через этот редактор. Старый каталог не изменяется.</p>
+   <div id="adminCandyList" class="admin-list"><p class="mut">Загрузка…</p></div>
+  </div>
   <form id="adminPromoForm" class="admin-card">
    <h3>🎁 Создать промокод</h3>
    <label>Код<input id="adminPromoCode" maxlength="40" placeholder="Например, DEIRON2026" required pattern="[A-Za-z0-9_]{3,40}"></label>
@@ -997,7 +1075,7 @@ const WIN_LEVELS=[
  {min:1000000,id:'mega-huge',title:'HUGE WIN',sub:'ПОБЕДА ГИГАНТСКОГО МАСШТАБА',duration:22000,bursts:3},
  {min:10000000,id:'mega-legendary',title:'LEGENDARY WIN',sub:'ЛЕГЕНДАРНЫЙ ДРОП',duration:25000,bursts:4}
 ].reverse();
-function celebrate(amount,profit=amount,silent=false){const p=Math.max(0,Math.floor(amount||0));const level=WIN_LEVELS.find(x=>p>=x.min);if(level){if(!silent)return mega(p,level);toast('🏆 '+level.title+' · +'+fmt(p)+' 🍬');return}if(profit>=1000){if(!silent)medSound();confetti(Math.min(110,Math.max(20,Math.floor(profit/120))),innerWidth/2,innerHeight*.6);toast('🔥 ВЫИГРЫШ +'+fmt(profit)+' 🔥')}else if(profit>0){if(!silent)coin();toast('+'+fmt(profit)+' 🍬')}}
+function celebrate(amount,profit=amount){const p=Math.max(0,Math.floor(amount||0));const level=WIN_LEVELS.find(x=>p>=x.min);if(level)return mega(p,level);if(profit>=1000){medSound();confetti(Math.min(110,Math.max(20,Math.floor(profit/120))),innerWidth/2,innerHeight*.6);toast('🔥 ВЫИГРЫШ +'+fmt(profit)+' 🔥')}else if(profit>0){coin();toast('+'+fmt(profit)+' 🍬')}}
 function mega(p,level){if(mon)closeMega();mon=true;$('#mega').classList.remove(...WIN_LEVELS.map(x=>x.id));$('#mega').classList.add(level.id,'on');$('#mtxt').textContent=level.title;$('#msub').textContent=level.sub;$('#mnum').textContent='+0';
  mrs();MP=[];mc.clearRect(0,0,mf.width,mf.height);mlast=performance.now();if(!mraf)mraf=requestAnimationFrame(mloop);megaSound();
  const T=(f,ms)=>MI.push(setTimeout(f,ms));
@@ -1078,7 +1156,6 @@ document.addEventListener('visibilitychange',()=>{
  else if(R.on){R.lastPoll=0;startRocketLoop();if(authUser&&R.serverRoundId)pollCloudRocket()}
 });
 async function cash(m){
- if(authUser&&!R.serverRoundId){toast('Нет подтверждённого облачного раунда. Локальная выплата отключена.');return}
  if(authUser&&R.serverRoundId){
   if(R.cashed||R.cashPending)return;
   R.cashPending=true;
@@ -1092,7 +1169,7 @@ async function cash(m){
     R.lastServerSync=Date.now();rcrash();return;
    }
    if(result.status!=='cashed')throw new Error('Неизвестный статус раунда: '+String(result.status));
-   R.cashed=true;setRocketPlayerRow(1,Number(result.payout)||0);R.serverT=Math.log(Math.max(1,Number(result.multiplier)||1))/.15;R.t=R.serverT;R.serverSyncMono=performance.now();R.lastServerSync=Date.now();R.syncStale=false;
+   R.cashed=true;R.serverT=Math.log(Math.max(1,Number(result.multiplier)||1))/.15;R.t=R.serverT;R.serverSyncMono=performance.now();R.lastServerSync=Date.now();R.syncStale=false;
    bal=Number(result.balance);$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);
    const pay=Number(result.payout),mult=Number(result.multiplier),pr=pay-R.bet;
    R.m=Math.max(1,Math.min(1000,mult));R.t=Math.log(R.m)/.15;R.serverT=R.t;R.serverSyncMono=performance.now();
@@ -1104,7 +1181,7 @@ async function cash(m){
   finally{R.cashPending=false;}
  }
  m=Math.max(1,Math.min(Number(R.crash)||1,Math.floor(m*100)/100));
- const pay=Math.floor(R.bet*m);R.cashed=true;setRocketPlayerRow(1,pay);if(AUTO_CASINO_MODE&&authUser)changeLocalBalance(pay);else setBal(pay);ACC.pendingRocket=null;ACC.stats=ACC.stats||{};
+ const pay=Math.floor(R.bet*m);R.cashed=true;if(AUTO_CASINO_MODE&&authUser)changeLocalBalance(pay);else setBal(pay);ACC.pendingRocket=null;ACC.stats=ACC.stats||{};
  ACC.stats.rocketWins=(ACC.stats.rocketWins||0)+1;recordAction('rocket',`Вывод на ${m.toFixed(2)}x`,pay);addXP(Math.max(5,Math.floor(pay/500)));
  const pr=pay-R.bet;$('#rmsg').textContent='Выведено на '+m.toFixed(2)+'x: '+(pr>=0?'+':'')+fmt(pr);
  $('#rgo').classList.remove('pulse');$('#rgo').disabled=true;$('#rgo').textContent='Смотрим, где упадёт…';celebrate(pay,pr);
@@ -1144,7 +1221,7 @@ function resumeCloudRocket(active){
  if(!active?.round_id||R.on)return;
  Object.assign(R,{on:true,bet:Number(active.bet),cashed:false,m:1,t:0,serverT:0,serverSyncMono:performance.now(),crash:1000,auto:0,t0:performance.now(),serverRoundId:active.round_id,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
  $('#mult').classList.remove('dead');botStart();$('#rmsg').textContent='Проверяем состояние активного раунда на сервере…';
- $('#rgo').classList.add('pulse');$('#rgo').disabled=false;$('#rgo').textContent='ПРОВЕРКА СЕРВЕРНОГО РАУНДА…';$('#rphase').textContent='🚀 Восстанавливаем облачный раунд';
+ $('#rgo').classList.add('pulse');$('#rgo').disabled=false;$('#rgo').textContent='ПРОВЕРКА СЕРВЕРНОГО РАУНДА…';
  startRocketLoop();pollCloudRocket();
 }
 function rcrash(){
@@ -1154,11 +1231,10 @@ function rcrash(){
  botEnd();$('#mult').textContent=R.crash.toFixed(2)+'x';$('#mult').classList.add('dead');draw(R.t,R.m,true);
  const st=$('#stage');st.classList.remove('boom');void st.offsetWidth;st.classList.add('boom');noise(.6,.3);tone(300,.6,'sawtooth',.15,0,40);
  chip('#rhist',R.crash.toFixed(2)+'x',R.crash<2?'lo':R.crash<10?'mid':'hi');
- if(R.bet>0&&!R.cashed){setRocketPlayerRow(2,0);$('#rmsg').textContent='💥 Улетела на '+R.crash.toFixed(2)+'x. −'+fmt(R.bet)+' 🍬';lose()}
+ if(R.bet>0&&!R.cashed){$('#rmsg').textContent='💥 Улетела на '+R.crash.toFixed(2)+'x. −'+fmt(R.bet)+' 🍬';lose()}
  else $('#rmsg').textContent='Раунд завершён на '+R.crash.toFixed(2)+'x';
- $('#rgo').classList.remove('pulse');$('#rgo').disabled=false;$('#rgo').textContent=authUser?'СТАРТ 🚀':(AUTO_CASINO_MODE?'ПРИЁМ СТАВОК…':'СТАРТ 🚀');
+ $('#rgo').classList.remove('pulse');$('#rgo').disabled=false;$('#rgo').textContent=AUTO_CASINO_MODE?'ПРИЁМ СТАВОК…':'СТАРТ 🚀';
  if(AUTO_CASINO_MODE){AUTO_ROCKET.phase='intermission';AUTO_ROCKET.endsAt=Date.now()+3500;AUTO_ROCKET.queuedBet=0;}
- $('#rphase').textContent='Раунд завершён · следующий раунд скоро';
 }
 $('#rgo').onclick=async()=>{
  ac();
@@ -1166,13 +1242,12 @@ $('#rgo').onclick=async()=>{
   if(AUTO_ROCKET.phase==='betting'){
    if(AUTO_ROCKET.queuedBet){toast('Ставка уже принята на следующий раунд');return}
    const b=getBet('#rocket');if(!b)return;
-   if(!authUser)changeLocalBalance(-b);
-   AUTO_ROCKET.queuedBet=b;
-   $('#rgo').textContent='СТАВКА ПРИНЯТА ✓';$('#rmsg').textContent='Ставка '+fmt(b)+' 🍬 принята. Раунд начнётся автоматически.';
+   changeLocalBalance(-b);AUTO_ROCKET.queuedBet=b;
+   $('#rgo').textContent='СТАВКА ПРИНЯТА ✓';$('#rmsg').textContent='Ставка '+fmt(b)+' 🍬 принята. Ждём общий старт этого браузера.';
    return;
   }
   if(AUTO_ROCKET.phase==='running'&&R.on&&R.bet>0&&!R.cashed){cash(R.m);return}
-  toast(AUTO_ROCKET.phase==='running'?'В этом раунде у тебя нет ставки':'Приём ставок откроется перед следующим раундом');return;
+  toast('Приём ставок откроется после завершения раунда');return;
  }
  if(R.on&&!R.cashed){cash(R.m);return}if(R.on)return;
  const b=getBet('#rocket');if(!b)return;
@@ -1195,10 +1270,10 @@ strip.innerHTML=Array.from({length:132},(_,i)=>{const n=ORD[i%ORD.length],c=col(
 let DS={i:22,j:0};
 function setPos(i,j,anim){const W=$('.wheel').clientWidth||360;if(!anim)strip.style.transition='none';strip.style.transform=`translateX(${-(i*CW+CW/2+j-W/2)}px)`;DS={i,j}}
 setPos(22,0,false);addEventListener('resize',()=>setPos(DS.i,DS.j,false));
-const D={b:{b:0,g:0,y:0},busy:false,current:null,requestId:null,requestWagers:null,blocked:false,placed:false};let dRevealT=0;
+const D={b:{b:0,g:0,y:0},busy:false,current:null};let dRevealT=0;
 function upB(){for(const c in D.b)$('#b-'+c).textContent=D.b[c]?fmt(D.b[c]):''}
 function payoutDouble(round){return (round.wagers[round.color]||0)*D_COLORS[round.color].coef*round.multiplier}
-function settleDouble(round,offline=false){if(!round||!ACC)return;const total=Object.values(round.wagers).reduce((a,b)=>a+b,0),pay=round.serverPayout!==undefined?Math.max(0,Math.floor(Number(round.serverPayout)||0)):payoutDouble(round),profit=pay-total;if(round.serverBalance!==undefined){bal=Math.max(0,Math.floor(Number(round.serverBalance)||0));}else{bal=Math.max(0,bal+pay)}$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingDouble=null;ACC.stats=ACC.stats||{};ACC.stats.doubleRounds=(ACC.stats.doubleRounds||0)+1;if(profit>0)ACC.stats.doubleWins=(ACC.stats.doubleWins||0)+1;recordAction('double',`Дабл: ${D_COLORS[round.color].label}${round.multiplier>1?' · множитель ×'+round.multiplier:''}`,pay);if(profit>0)publishActivity(crypto.randomUUID(),'double','выиграл в Дабл',`${D_COLORS[round.color].label}${round.multiplier>1?' · ×'+round.multiplier:''}`,pay);addXP(Math.max(8,Math.floor(total/100)));if(!offline){chip('#dhist',D_COLORS[round.color].mark,round.color);D.b={b:0,g:0,y:0};D.requestId=null;D.requestWagers=null;D.blocked=false;D.placed=false;D.busy=false;D.current=null;upB();$('#dgo').disabled=false;$('#dgo').textContent='ПОСТАВИТЬ 🎲';$('#dmult').hidden=true;if(profit>0)celebrate(pay,profit,$('#double').hidden);else{toast(`Выпало ${D_COLORS[round.color].label}${profit<0?' · −'+fmt(-profit):''}`);if(!$('#double').hidden)lose()}}else toast(`Незавершённый раунд Дабла восстановлен: ${D_COLORS[round.color].label}`);save();}
+function settleDouble(round,offline=false){if(!round||!ACC)return;const total=Object.values(round.wagers).reduce((a,b)=>a+b,0),pay=payoutDouble(round),profit=pay-total;if(round.serverBalance!==undefined){bal=Math.max(0,Math.floor(Number(round.serverBalance)||0));}else{bal=Math.max(0,bal+pay)}$('#bal').textContent=fmt(bal);$('#balRub').textContent=rubLabel(bal);ACC.pendingDouble=null;ACC.stats=ACC.stats||{};ACC.stats.doubleRounds=(ACC.stats.doubleRounds||0)+1;if(profit>0)ACC.stats.doubleWins=(ACC.stats.doubleWins||0)+1;recordAction('double',`Дабл: ${D_COLORS[round.color].label}${round.multiplier>1?' · множитель ×'+round.multiplier:''}`,pay);if(profit>0)publishActivity(crypto.randomUUID(),'double','выиграл в Дабл',`${D_COLORS[round.color].label}${round.multiplier>1?' · ×'+round.multiplier:''}`,pay);addXP(Math.max(8,Math.floor(total/100)));if(!offline){chip('#dhist',D_COLORS[round.color].mark,round.color);D.b={b:0,g:0,y:0};D.busy=false;D.current=null;upB();$('#dgo').disabled=false;$('#dgo').textContent='КРУТИТЬ 🎲';$('#dmult').hidden=true;if(profit>0)celebrate(pay,profit);else{toast(`Выпало ${D_COLORS[round.color].label}${profit<0?' · −'+fmt(-profit):''}`);lose()}}else toast(`Незавершённый раунд Дабла восстановлен: ${D_COLORS[round.color].label}`);save();}
 function settlePendingDouble(round){
  if(!round)return;
  if(round.rulesVersion===2){settleDouble(round,true);return}
@@ -1209,38 +1284,18 @@ function settlePendingDouble(round){
  round.rulesVersion=2;
  settleDouble(round,true);
 }
-$$('.col').forEach(btn=>btn.onclick=()=>{ac();if(D.busy||D.blocked||D.placed)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting'){toast('Ставки закрыты до следующего раунда');return}const b=getBet('#double');if(!b)return;const staged=Object.values(D.b).reduce((a,v)=>a+v,0);if(staged+b>bal){toast('Сумма ставок превышает баланс');return}if(!authUser)changeLocalBalance(-b);D.b[btn.dataset.c]+=b;ACC.stagedDouble={...D.b};save();upB();tone(660,.06,'square',.1)});
-$('#dclr').onclick=()=>{if(D.busy)return;if(D.requestId){toast('Сначала повторно проверь результат незавершённого запроса');return}if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting')return toast('Ставки уже закрыты');const refund=Object.values(D.b).reduce((a,b)=>a+b,0);if(!authUser)changeLocalBalance(refund);D.b={b:0,g:0,y:0};D.requestWagers=null;D.blocked=false;D.placed=false;ACC.stagedDouble=null;save();upB()};
-$('#dgo').onclick=()=>{if(D.busy)return;if(D.blocked){autoDoubleSpin();return}if(AUTO_DOUBLE.phase!=='betting')return toast('Сейчас нельзя поставить на этот раунд');const total=Object.values(D.b).reduce((a,b)=>a+b,0);if(!total)return toast('Сначала выбери цвет и сумму ставки');D.placed=true;$('#dgo').textContent='СТАВКА ПРИНЯТА ✓';$('#dphase').textContent='Ставка принята · раунд начнётся автоматически';tone(880,.08,'triangle',.08);};
-async function autoDoubleSpin(){
- const wagers=D.placed?{...D.b}:{b:0,g:0,y:0},total=Object.values(wagers).reduce((a,b)=>a+b,0);
- if(!D.placed&&!authUser){const refund=Object.values(D.b).reduce((a,b)=>a+b,0);if(refund)changeLocalBalance(refund);D.b={b:0,g:0,y:0};upB();}
- let round;
- if(authUser&&total>0){
-  D.requestId=D.requestId||crypto.randomUUID();D.requestWagers=D.requestWagers||{...wagers};
-  D.busy=true;D.current={id:D.requestId,wagers:D.requestWagers};AUTO_DOUBLE.phase='running';dbStart();
-  $('#dphase').textContent='Раунд рассчитывается на сервере…';$('#dgo').disabled=true;$('#dgo').textContent='ПОЛУЧАЕМ РЕЗУЛЬТАТ…';
-  try{
-   const result=await cloudRpc('fantik_play_double',{p_wagers:D.requestWagers,p_request_id:D.requestId});
-   const slot=Number(result?.slot),color=String(result?.color||''),multiplier=Number(result?.multiplier),serverBalance=Number(result?.balance),serverPayout=Number(result?.payout);
-   if(!Number.isInteger(slot)||slot<0||slot>11||!['b','g','y'].includes(color)||col(slot)!==color||![1,2].includes(multiplier)||!Number.isFinite(serverBalance)||serverBalance<0||!Number.isFinite(serverPayout)||serverPayout<0)throw new Error('Сервер вернул некорректный результат Дабла');
-   round={id:result.round_id||D.requestId,rulesVersion:2,n:slot,color,multiplier,wagers:{...D.requestWagers},serverBalance,serverPayout};
-  }catch(e){
-   D.busy=false;D.current=null;D.blocked=true;AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=Date.now()+8000;
-   $('#dphase').textContent='Ошибка связи. Нажми «Повторить», чтобы проверить тот же запрос';$('#dgo').disabled=false;$('#dgo').textContent='ПОВТОРИТЬ ЗАПРОС';
-   if(String(e.message||'').includes('Не хватает фантиков')){D.requestId=null;D.requestWagers=null;D.blocked=false;D.placed=false;D.b={b:0,g:0,y:0};ACC.stagedDouble=null;upB();try{await refreshEconomyQuiet()}catch(_){} }
-   toast('Не удалось завершить Дабл: '+e.message);return;
-  }
- }else{
-  const n=Math.floor(rnd()*12),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1;
-  round={id:'local-d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:col(n),multiplier,wagers};
-  D.busy=true;D.current=round;AUTO_DOUBLE.phase='running';dbStart();
- }
- const n=round.n,o=ORD.indexOf(n),winning=round.color,j=(rnd()-.5)*36;
+$$('.col').forEach(btn=>btn.onclick=()=>{ac();if(D.busy)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting'){toast('Ставки закрыты до следующего раунда');return}const b=getBet('#double');if(!b)return;const staged=Object.values(D.b).reduce((a,v)=>a+v,0);if(staged+b>bal){toast('Сумма ставок превышает баланс');return}changeLocalBalance(-b);D.b[btn.dataset.c]+=b;ACC.stagedDouble={...D.b};save();upB();tone(660,.06,'square',.1)});
+$('#dclr').onclick=()=>{if(D.busy)return;if(AUTO_CASINO_MODE&&AUTO_DOUBLE.phase!=='betting')return toast('Ставки уже закрыты');const refund=Object.values(D.b).reduce((a,b)=>a+b,0);changeLocalBalance(refund);D.b={b:0,g:0,y:0};ACC.stagedDouble=null;save();upB()};
+$('#dgo').onclick=()=>{if(AUTO_CASINO_MODE){toast(AUTO_DOUBLE.phase==='betting'?'Раунд запустится автоматически после закрытия ставок':'Дабл работает автоматически');return}};
+function autoDoubleSpin(){
+ const wagers={...D.b},total=Object.values(wagers).reduce((a,b)=>a+b,0);
+ const n=Math.floor(rnd()*12),o=ORD.indexOf(n),winning=col(n),multiplier=rnd()<DOUBLE_CONFIG.multiplierChance?DOUBLE_CONFIG.multiplierValue:1,j=(rnd()-.5)*36;
+ const round={id:'local-d-'+Date.now()+'-'+Math.floor(rnd()*1e6),rulesVersion:2,n,color:winning,multiplier,wagers};
+ D.busy=true;D.current=round;AUTO_DOUBLE.phase='running';dbStart();
  ACC.stagedDouble=null;ACC.pendingDouble=null;save();
  $('#dphase').textContent='Раунд идёт · ставки закрыты';$('#dgo').disabled=true;$('#dgo').textContent='РАУНД ИДЁТ…';
- $('#dmult').hidden=true;clearTimeout(dRevealT);if(round.multiplier>1)dRevealT=setTimeout(()=>{$('#dmult').textContent='✨ СЛУЧАЙНЫЙ МНОЖИТЕЛЬ ×2';$('#dmult').hidden=false;$('#dmult').classList.remove('reveal');void $('#dmult').offsetWidth;$('#dmult').classList.add('reveal');},DOUBLE_CONFIG.revealDelay);
- strip.style.transition='transform 3.2s cubic-bezier(.12,.6,.1,1)';setPos(108+o,j,true);
+ $('#dmult').hidden=true;clearTimeout(dRevealT);if(multiplier>1)dRevealT=setTimeout(()=>{$('#dmult').textContent='✨ СЛУЧАЙНЫЙ МНОЖИТЕЛЬ ×2';$('#dmult').hidden=false;$('#dmult').classList.remove('reveal');void $('#dmult').offsetWidth;$('#dmult').classList.add('reveal');},DOUBLE_CONFIG.revealDelay);
+ strip.style.transition='transform 3.2s cubic-bezier(.12,.6,.1,1)';setPos(108+o,j,true);noise(3.2,.07);tone(200,3.2,'sine',.055,0,60);
  setTimeout(()=>{
   setPos(12+o,j,false);dbEnd(winning);
   if(total>0)settleDouble(round,false);else{D.b={b:0,g:0,y:0};D.busy=false;D.current=null;upB();$('#dmult').hidden=true}
@@ -1253,6 +1308,21 @@ const CD=`Skittles|110|8|🌈|ug;M&M's|100|8|🔴|uc;Snickers|70|8|🥜|uc;Twix|
 /* цена в фантиках = реальная цена × (0.4 + оценка/4) × 4 */
 // Server catalog is authoritative for online upgrader targets.
 let UPGRADE_TARGETS=null, UPGRADE_TARGETS_PROMISE=null, UPGRADE_TARGETS_ERROR=null;
+async function loadCustomCandyCatalog(){
+ if(!sb)return [];
+ const rows=await cloudRpc('fantik_get_item_catalog',{});
+ const custom=(Array.isArray(rows)?rows:[]).map(row=>{
+  const id=String(row.item_id||''),p=Number(row.item_value),rub=Number(row.reference_price_rub),rating=Number(row.rating);
+  if(!id||!Number.isFinite(p)||p<=0||!Number.isFinite(rub)||rub<=0)return null;
+  return {id,n:String(row.item_name||id),e:String(row.item_emoji||'🍬'),p,rub,r:Math.max(1,Math.min(10,rating||5)),t:row.item_type==='dessert'?'d':'custom',imageUrl:row.image_url||'',description:row.description||'',custom:true};
+ }).filter(Boolean);
+ const customIds=new Set(custom.map(x=>x.id));
+ for(let i=CD.length-1;i>=0;i--)if(CD[i].custom)CD.splice(i,1);
+ CD.push(...custom);
+ custom.forEach(x=>candyArtCache.delete(x.id));
+ UPGRADE_TARGETS=null;UPGRADE_TARGETS_PROMISE=null;UPGRADE_TARGETS_ERROR=null;
+ return custom;
+}
 async function loadUpgradeTargets(){
  if(!authUser){UPGRADE_TARGETS=CD;return UPGRADE_TARGETS;}
  const rows=await cloudRpc('fantik_get_upgrade_targets',{});
@@ -1263,7 +1333,7 @@ async function loadUpgradeTargets(){
    const p=Number(row.item_value);
    if(!id||!Number.isFinite(p)||p<=0)return null;
    return {...(local||{}),id,n:String(row.item_name||local?.n||id),e:String(row.item_emoji||local?.e||'🍬'),p,
-     t:local?.t||'custom',r:local?.r||5,rub:local?.rub??Math.round(p/10)};
+     t:local?.t||(row.item_type==='dessert'?'d':'custom'),r:local?.r||Number(row.rating)||5,rub:local?.rub??(Number(row.reference_price_rub)||Math.round(p/10)),imageUrl:local?.imageUrl||row.image_url||'',description:local?.description||row.description||''};
  }).filter(Boolean);
  if(!mapped.length)throw new Error('UPGRADE_CATALOG_EMPTY');
  UPGRADE_TARGETS=mapped;
@@ -1273,6 +1343,7 @@ async function loadUpgradeTargets(){
 const tier=p=>p<150?0:p<500?1:p<1500?2:p<3500?3:4;
 const candyArtCache=new Map();
 function candyArt(c){
+ if(c?.imageUrl)return c.imageUrl;
  const cacheKey=c?.id||c?.n||'';if(candyArtCache.has(cacheKey))return candyArtCache.get(cacheKey);
  const h=[...c.n].reduce((a,ch)=>(a*31+ch.charCodeAt(0))>>>0,7),pal=[['#ff6b8a','#7d183e'],['#ffcf55','#a94b14'],['#75d6ff','#1649a3'],['#c99cff','#54227c'],['#7ce6ad','#14583f'],['#ff9a58','#873417']],p=pal[h%pal.length],shape=h%5,accent=['#fff1b6','#ffffff','#ffe4fb','#d4fbff','#fff'][h%5],dessert=c.t.includes('d');
  let body='';
@@ -1289,7 +1360,7 @@ function candyArt(c){
  const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${accent}"/><stop offset=".35" stop-color="${p[0]}"/><stop offset="1" stop-color="${p[1]}"/></linearGradient><radialGradient id="shine"><stop stop-color="#fff" stop-opacity=".8"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><ellipse cx="60" cy="103" rx="39" ry="7" fill="#000" opacity=".28"/>${body}${dessert?dots:shape!==3?dots:''}<rect x="87" y="84" width="22" height="12" rx="5" fill="#140a2a" fill-opacity=".72"/><text x="98" y="92.5" text-anchor="middle" font-family="system-ui,sans-serif" font-size="6" font-weight="900" fill="#fff">${emblem}</text><ellipse cx="43" cy="31" rx="19" ry="10" fill="url(#shine)" opacity=".8" transform="rotate(-20 43 31)"/><path d="M21 89 Q60 101 99 89" fill="none" stroke="#fff" stroke-opacity=".25" stroke-width="2"/></svg>`;
  const src='data:image/svg+xml;charset=UTF-8,'+encodeURIComponent(svg);candyArtCache.set(cacheKey,src);return src
 }
-const card=(c,x,a='')=>`<div ${a} class='ci t${tier(c.p)}'><img class="candy-art" loading="lazy" src="${candyArt(c)}" alt="${c.n}"><b>${c.n}</b><span class='pr'>🍬 ${fmt(c.p)} <small>${rubLabel(c.p)}</small></span><small>${x||'Справочная цена: '+c.rub+' ₽ · ★'+c.r}</small></div>`;
+const card=(c,x,a='')=>`<div ${a} class='ci t${tier(c.p)}'><img class="candy-art" loading="lazy" src="${candyArt(c)}" alt="${escHtml(c.n)}"><b>${escHtml(c.n)}</b><span class='pr'>🍬 ${fmt(c.p)} <small>${rubLabel(c.p)}</small></span><small>${x||'Справочная цена: '+c.rub+' ₽ · ★'+c.r}</small></div>`;
 const caseDefs=[
  ['Советское детство','🧒',c=>c.t.includes('r'),'ОБЫЧНЫЙ','retro'],
  ['Американская мечта','🗽',c=>c.t.includes('u'),'ОБЫЧНЫЙ','usa'],
@@ -1352,7 +1423,7 @@ let INV=[],uid=0,CUR=null,cbusy=false,ubusy=false,TG=null,pendingCaseItem=null;c
 const giveItem=c=>{if(!c)return null;const item={u:++uid,c};INV.push(item);ACC.collection=ACC.collection||[];if(!ACC.collection.includes(c.id))ACC.collection.push(c.id);queueSave();return item},val=S=>INV.filter(o=>S.has(o.u)).reduce((s,o)=>s+o.c.p,0);
 const caseDiscount=()=>Math.min(.15,(ACC?.upgrades?.caseSaver||0)*.03),casePrice=k=>Math.max(5,Math.ceil(k.pr*(1-caseDiscount())/5)*5);
 function escHtml(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
-function caseArtMarkup(k){const image=k.imageUrl||(k.staticIndex!==undefined?CASE_ART[k.staticIndex]:null);return image?`<img src="${escHtml(image)}" alt="${escHtml(k.n)}" loading="lazy">`:`<span class="case-emoji-art">${escHtml(k.e||'📦')}</span>`}
+function caseArtMarkup(k){const image=k.imageUrl||(k.staticIndex!==undefined?CASE_ART[k.staticIndex]:null);return image?`<img src="${escHtml(image)}" alt="${escHtml(k.n)}" loading="lazy" decoding="async" fetchpriority="low">`:`<span class="case-emoji-art">${escHtml(k.e||'📦')}</span>`}
 function rCases(){
   let lastCollection='';let cards='';
   CS.forEach((k,i)=>{
@@ -1481,11 +1552,10 @@ function botEvt(){const n=pick(BN),a=pick(BA),x=rnd();let t,p;
 function mkBot(L){let n,i=0;do{n=pick(BN)}while(L.some(b=>b.n==n)&&++i<20);return{n,a:pick(BA),b:Math.round(Math.pow(10,1.7+rnd()*2.1)/10)*10,st:0}}
 const tg=()=>Math.round((rnd()<.15?5+rnd()*25:1.1-Math.log(rnd())*1.1)*100)/100,dc=()=>pick(['b','b','b','b','b','b','g','g','g','g','g','y']);
 function live(el,L,dbl){const html=[...L].sort((a,b)=>b.b-a.b).map(b=>`<div class='lr ${b.st==1?'w':b.st==2?'l':''}'><span>${b.a} ${b.n}</span><span>${dbl?{b:'🔵',g:'🟢',y:'🟡'}[b.c]+' ':''}🍬 ${fmt(b.b)}</span><span>${b.st==1?(dbl?'':'x'+b.t.toFixed(2)+' ')+'+'+fmt(b.w-b.b):b.st==2?'−'+fmt(b.b):'ставка'}</span></div>`).join('');if(el.dataset.lastMarkup!==html){el.innerHTML=html;el.dataset.lastMarkup=html}}
-function setRocketPlayerRow(status,w=0){const row=RB.find(b=>b.isMe);if(!row)return;row.st=status;row.w=w;live($('#rlive'),RB);}
-function botTick(m){let ch=0;for(const b of RB)if(!b.isMe&&!b.st&&m>=b.t){b.st=1;b.w=Math.floor(b.b*b.t);ch=1;if(b.w-b.b>=3000)feed(`${b.a} ${b.n} вывел ${fmt(b.w)} 🍬 на ${b.t.toFixed(2)}x`,b.w)}if(ch)live($('#rlive'),RB)}
-function botStart(){while(RB.filter(b=>!b.isMe).length<6)RB.push(mkBot(RB));RB=RB.filter(b=>!b.isMe);RB.forEach(b=>{b.t=tg();b.st=0});if(R.bet>0&&ME)RB.push({n:ME.n,a:ME.a||'🙂',b:R.bet,st:0,t:Infinity,w:0,isMe:true});RE=0;live($('#rlive'),RB)}
+function botTick(m){let ch=0;for(const b of RB)if(!b.st&&m>=b.t){b.st=1;b.w=Math.floor(b.b*b.t);ch=1;if(b.w-b.b>=3000)feed(`${b.a} ${b.n} вывел ${fmt(b.w)} 🍬 на ${b.t.toFixed(2)}x`,b.w)}if(ch)live($('#rlive'),RB)}
+function botStart(){while(RB.length<6)RB.push(mkBot(RB));RB.forEach(b=>{b.t=tg();b.st=0});RE=0;live($('#rlive'),RB)}
 function botEnd(){RB.forEach(b=>{if(!b.st)b.st=2});RE=Date.now();live($('#rlive'),RB)}
-function dbStart(){DB=DB.filter(b=>!b.isMe);while(DB.filter(b=>!b.isMe).length<6){const b=mkBot(DB);b.c=dc();DB.push(b)}if(D.placed&&ME){for(const [c,amount] of Object.entries(D.b))if(amount>0)DB.push({n:ME.n,a:ME.a||'🙂',b:amount,c,st:0,t:0,w:0,isMe:true})}DE=0;live($('#dlive'),DB,1)}
+function dbStart(){while(DB.length<6){const b=mkBot(DB);b.c=dc();DB.push(b)}DE=0;live($('#dlive'),DB,1)}
 function dbEnd(w){DB.forEach(b=>{if(b.c==w){b.st=1;b.w=b.b*(w=='y'?14:2);if(b.w>=8000)feed(`${b.a} ${b.n} сорвал ${fmt(b.w)} 🍬 в дабле`,b.w)}else b.st=2});DE=Date.now();live($('#dlive'),DB,1)}
 for(let i=0;i<5;i++){RB.push(mkBot(RB));const b=mkBot(DB);b.c=dc();DB.push(b)}
 
@@ -1493,28 +1563,7 @@ function startAutoCasino(){
  if(!AUTO_CASINO_MODE||AUTO_ROCKET.started)return;
  AUTO_ROCKET.started=true;if(R.on&&R.serverRoundId){AUTO_ROCKET.phase='running';AUTO_ROCKET.endsAt=0}else{AUTO_ROCKET.phase='betting';AUTO_ROCKET.endsAt=Date.now()+7000}
  AUTO_DOUBLE.started=true;AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=Date.now()+8000;
- $('#localCasinoNote').hidden=!!authUser;
- if(!R.on){$('#rphase').textContent='🚀 Приём ставок скоро откроется';$('#rgo').textContent='ПОСТАВИТЬ НА РАУНД'}
-}
-async function beginAutoRocketRound(){
- if(AUTO_ROCKET.phase!=='betting')return;
- AUTO_ROCKET.phase='starting';
- const bet=AUTO_ROCKET.queuedBet||0;AUTO_ROCKET.queuedBet=0;
- let serverRoundId=null,startedAt=Date.now(),startingBalance=null;
- if(authUser&&bet>0){
-  try{const result=await cloudRpc('fantik_rocket_start',{p_bet:bet});serverRoundId=result.round_id;startedAt=Date.parse(result.started_at)||Date.now();startingBalance=Number(result.balance)}
-  catch(e){toast('Ставка не прошла: '+e.message);AUTO_ROCKET.phase='intermission';AUTO_ROCKET.endsAt=Date.now()+3500;$('#rgo').textContent='СЛЕДУЮЩИЙ РАУНД';return}
- }
- const crash=serverRoundId?1000:Math.max(1,Math.min(1000,Math.floor(97/(1-rnd()))/100));
- if(!authUser&&bet===0){} // no wager: the round still runs as a local simulation
- const elapsed=serverRoundId?Math.max(0,(Date.now()-startedAt)/1000):0;
- AUTO_ROCKET.phase='running';
- Object.assign(R,{on:true,bet,cashed:!bet,m:1,t:elapsed,serverT:elapsed,serverSyncMono:performance.now(),crash,auto:+$('#rauto').value||0,t0:performance.now()-elapsed*1000,serverRoundId,pollBusy:false,lastPoll:0,lastServerSync:Date.now(),pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
- if(serverRoundId){bal=startingBalance;paintLocalBalance();ACC.pendingRocket=null}
- else if(bet>0&&!authUser){ACC.pendingRocket={bet,crash,auto:R.auto,startedAt:Date.now()}}
- if(bet>0){ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;$('#rmsg').textContent='🚀 Раунд начался! Твоя ставка: '+fmt(bet)+' 🍬';$('#rgo').textContent='ЗАБРАТЬ ВЫИГРЫШ';$('#rgo').classList.add('pulse')}
- else{$('#rmsg').textContent='🚀 Новый раунд начался — можно наблюдать';$('#rgo').textContent='РАУНД ИДЁТ'}
- $('#rgo').disabled=!bet;$('#rphase').textContent='🚀 Раунд идёт · ставки закрыты';$('#mult').classList.remove('dead');botStart();save();tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
+ $('#localCasinoNote').hidden=false;
 }
 setInterval(()=>{
  if(!AUTO_CASINO_MODE||!ME)return;
@@ -1523,7 +1572,13 @@ setInterval(()=>{
   const left=Math.max(0,Math.ceil((AUTO_ROCKET.endsAt-now)/1000));
   $('#rphase').textContent=`🚀 Приём ставок · старт через ${left} сек`;
   if(!AUTO_ROCKET.queuedBet)$('#rgo').textContent=`ПОСТАВИТЬ НА РАУНД · ${left}с`;
-  if(now>=AUTO_ROCKET.endsAt)beginAutoRocketRound();
+  if(now>=AUTO_ROCKET.endsAt){
+   const bet=AUTO_ROCKET.queuedBet;AUTO_ROCKET.queuedBet=0;AUTO_ROCKET.phase='running';
+   const crash=Math.max(1,Math.min(1000,Math.floor(97/(1-rnd()))/100));
+   Object.assign(R,{on:true,bet,cashed:!bet,m:1,t:0,serverT:0,serverSyncMono:performance.now(),crash,auto:+$('#rauto').value||0,t0:performance.now(),serverRoundId:null,pollBusy:false,lastPoll:0,lastServerSync:now,pollDelay:1000,syncStale:false,settled:false,cashPending:false,lastPaint:0,lastBotTick:0,lastDrawKey:'',rafId:0});
+   if(bet){ACC.stats=ACC.stats||{};ACC.stats.rocketRounds=(ACC.stats.rocketRounds||0)+1;$('#rmsg').textContent='🚀 Раунд начался! Твоя ставка: '+fmt(bet)+' 🍬';$('#rgo').textContent='ЗАБРАТЬ ВЫИГРЫШ';$('#rgo').classList.add('pulse');}else{$('#rmsg').textContent='Раунд начался — можно наблюдать';$('#rgo').textContent='РАУНД ИДЁТ';}
+   $('#rgo').disabled=!bet;$('#mult').classList.remove('dead');botStart();save();tone(120,.8,'sawtooth',.12,0,500);startRocketLoop();
+  }
  }else if(AUTO_ROCKET.phase==='running'){
   if(R.on&&R.bet>0&&!R.cashed){$('#rgo').disabled=false;$('#rgo').textContent='ЗАБРАТЬ '+fmt(R.bet*R.m)+' 🍬'}
   else if(R.on){$('#rgo').disabled=true;$('#rgo').textContent='РАУНД ИДЁТ…'}
@@ -1534,14 +1589,10 @@ setInterval(()=>{
  if(AUTO_DOUBLE.phase==='betting'){
   const left=Math.max(0,Math.ceil((AUTO_DOUBLE.endsAt-now)/1000));
   $('#dphase').textContent=`🎲 Приём ставок · закрытие через ${left} сек`;
-  $('#dgo').disabled=!!D.busy||!!D.blocked;
-  if(D.blocked)$('#dgo').textContent='ПОВТОРИТЬ ЗАПРОС';
-  else $('#dgo').textContent=D.placed?'СТАВКА ПРИНЯТА ✓':'ПОСТАВИТЬ 🎲';
-  if(now>=AUTO_DOUBLE.endsAt){if(D.blocked){$('#dgo').disabled=false;$('#dgo').textContent='ПОВТОРИТЬ ЗАПРОС'}else{AUTO_DOUBLE.phase='running';autoDoubleSpin()}}
+  $('#dgo').disabled=true;$('#dgo').textContent=`СТАВКИ ЗАКРОЮТСЯ · ${left}с`;
+  if(now>=AUTO_DOUBLE.endsAt){AUTO_DOUBLE.phase='running';autoDoubleSpin()}
  }else if(AUTO_DOUBLE.phase==='intermission'&&now>=AUTO_DOUBLE.endsAt){
-  AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=now+8000;
-  if(!D.placed&&!authUser){const refund=Object.values(D.b).reduce((a,b)=>a+b,0);if(refund)changeLocalBalance(refund)}
-  D.b={b:0,g:0,y:0};D.placed=false;D.requestId=null;D.requestWagers=null;D.blocked=false;upB();$('#dgo').disabled=false;$('#dgo').textContent='ПОСТАВИТЬ 🎲';$('#dphase').textContent='Новый раунд · приём ставок открыт';
+  AUTO_DOUBLE.phase='betting';AUTO_DOUBLE.endsAt=now+8000;D.b={b:0,g:0,y:0};upB();$('#dgo').disabled=true;$('#dgo').textContent='СТАВКИ ЗАКРОЮТСЯ · 08с';$('#dphase').textContent='Новый раунд · приём ставок открыт';
  }else if(AUTO_DOUBLE.phase==='running'){$('#dphase').textContent='🎲 Вращение · ставки закрыты'}
 },200);
 setInterval(()=>{
@@ -1647,6 +1698,8 @@ async function completeCloudLogin(user){
  const n=profile.username, a=profile.avatar||'🧑';
  const local=readAccount(n);
  const initial=cloudSave?.game_data || local.account || {};
+ authUser=user;
+ await loadCustomCandyCatalog();
  const economy=await getEconomyState();
  initial.balance=economy.balance;initial.bal=economy.balance;
  initial.inventory=(economy.inventory||[]).map(x=>({id:x.item_id,uid:Number(x.item_instance_id)}));
@@ -1656,7 +1709,6 @@ async function completeCloudLogin(user){
  initial.favorites=(economy.inventory||[]).filter(x=>x.is_favorite).map(x=>Number(x.item_instance_id));
  initial.lockedItems=(economy.inventory||[]).filter(x=>x.is_locked).map(x=>Number(x.item_instance_id));
  initial.pendingReward=null;initial.pendingDouble=null;initial.stagedDouble=null;initial.pendingRocket=null;initial.claimedRewards=[];
- authUser=user;
  login(n,a,user,initial);
  applyEconomyState(economy);
  await loadCustomCases();
@@ -1897,6 +1949,26 @@ let IS_ADMIN=false, ADMIN_ITEMS=[], ADMIN_EDIT_ITEMS=new Map(), ADMIN_COLLECTION
 const ADMIN_SKINS=['retro','usa','acid','choco','lollipop','gummy','vhs','premium','halloween','pandora','starter','collector','rare','epic','legendary','dessert'];
 function setAdminVisibility(){const b=$('#adminTab');if(b)b.hidden=!IS_ADMIN;if(!IS_ADMIN&&$('#admin')&&!$('#admin').hidden){$('#admin').hidden=true;$('#profile').hidden=false;}}
 async function refreshAdminAccess(){IS_ADMIN=false;setAdminVisibility();if(!authUser)return;try{const r=await cloudRpc('fantik_admin_status',{});IS_ADMIN=!!r?.is_admin;setAdminVisibility();}catch(e){console.warn('Admin access check:',e.message)}}
+let ADMIN_STATS_TIMER=0,ADMIN_CUSTOM_ITEMS=[];
+const statFmt=v=>fmt(Math.max(0,Number(v)||0));
+async function refreshAdminStats(){
+ if(!IS_ADMIN||$('#admin').hidden||document.hidden)return;
+ try{const x=await cloudRpc('fantik_admin_live_stats',{});
+  $('#adminStatPlayers').textContent=statFmt(x.registered_total);$('#adminStatNewPlayers').textContent=statFmt(x.registered_24h);$('#adminStatActive').textContent=statFmt(x.active_5m);$('#adminStatEvents').textContent=statFmt(x.events_1h);$('#adminStatOpens').textContent=statFmt(x.case_openings_24h);$('#adminStatSpent').textContent=statFmt(x.case_spent_24h)+' 🍬';$('#adminStatWallets').textContent=statFmt(x.wallet_balance_total)+' 🍬';$('#adminStatCustomItems').textContent=statFmt(x.custom_items_total);
+  $('#adminStatsUpdated').textContent='Обновлено '+new Date().toLocaleTimeString('ru-RU');
+  const feed=Array.isArray(x.recent_activity)?x.recent_activity:[];$('#adminStatsFeed').innerHTML=feed.length?feed.map(a=>`<div class="admin-list-row"><div><strong>${escHtml(a.avatar||'🧑')} ${escHtml(a.username||'Игрок')} · ${escHtml(a.title||a.event_type||'Событие')}</strong><small>${escHtml(a.detail||'')} · ${new Date(a.created_at).toLocaleString('ru-RU')}${Number(a.amount)?' · '+statFmt(a.amount)+' 🍬':''}</small></div></div>`).join(''):'<p class="mut">За последнее время событий нет.</p>';
+ }catch(e){$('#adminStatsUpdated').textContent='Ошибка обновления';console.warn('Admin stats:',e.message)}
+}
+async function refreshAdminCustomItems(){
+ if(!IS_ADMIN)return;const el=$('#adminCandyList');el.innerHTML='<p class="mut">Загружаю предметы…</p>';
+ try{ADMIN_CUSTOM_ITEMS=await cloudRpc('fantik_admin_list_custom_items',{});if(!Array.isArray(ADMIN_CUSTOM_ITEMS))ADMIN_CUSTOM_ITEMS=[];
+  el.innerHTML=ADMIN_CUSTOM_ITEMS.length?ADMIN_CUSTOM_ITEMS.map(x=>`<div class="admin-list-row"><div><strong>${escHtml(x.item_emoji||'🍬')} ${escHtml(x.item_name)}</strong><small>${x.item_type==='dessert'?'Десерт':'Конфета'} · ${statFmt(x.reference_price_rub)} ₽ · ★${Number(x.rating)||5}/10 · ${statFmt(x.item_value)} 🍬</small>${x.description?`<small>${escHtml(x.description)}</small>`:''}</div><div class="admin-case-actions"><button type="button" data-candy-edit="${escHtml(x.item_id)}">Изменить</button></div></div>`).join(''):'<p class="mut">Пока не добавлено ни одной собственной конфеты или десерта.</p>';
+ }catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}
+}
+function candyValuePreview(){const rub=Math.max(0,Number($('#adminCandyPriceRub').value)||0),rating=Math.max(1,Math.min(10,Number($('#adminCandyRating').value)||5)),value=Math.round(rub*(.4+rating*.25)*4),name=$('#adminCandyName').value.trim()||'Новая конфета',emoji=$('#adminCandyEmoji').value.trim()||'🍬',type=$('#adminCandyType').value,image=$('#adminCandyImageUrl').value.trim()||(!$('#adminCandyImagePreview').hidden?$('#adminCandyImagePreview').src:'');$('#adminCandyValuePreview').textContent='Игровая стоимость: '+fmt(value)+' фантиков · формула: '+rub+' ₽ × (0,4 + '+rating+' × 0,25) × 4';$('#adminCandyPreviewName').textContent=emoji+' '+name;$('#adminCandyPreviewMeta').textContent=(type==='dessert'?'Десерт':'Конфета')+' · '+rub+' ₽ · ★'+rating+'/10 · 🍬 '+fmt(value);candyArtCache.delete('admin-preview');$('#adminCandyArtPreview').src=candyArt({id:'admin-preview',n:name,e:emoji,p:value,rub,r:rating,t:type==='dessert'?'d':'custom',imageUrl:image});}
+function resetAdminCandyForm(){const f=$('#adminCandyForm');f.reset();$('#adminCandyId').value='';$('#adminCandyEmoji').value='🍬';$('#adminCandyPriceRub').value='100';$('#adminCandyRating').value='5';$('#adminCandyType').value='candy';$('#adminCandyImageUrl').value='';$('#adminCandyImage').value='';$('#adminCandyImagePreview').hidden=true;$('#adminCandyFormTitle').textContent='🍬 Добавить новую конфету или десерт';$('#adminCandySubmit').textContent='ДОБАВИТЬ ПРЕДМЕТ';$('#adminCandyCancel').hidden=true;$('#adminCandyStatus').textContent='';candyValuePreview();}
+function editAdminCandy(row){$('#adminCandyId').value=row.item_id;$('#adminCandyName').value=row.item_name||'';$('#adminCandyPriceRub').value=row.reference_price_rub||100;$('#adminCandyRating').value=String(row.rating||5);$('#adminCandyType').value=row.item_type||'candy';$('#adminCandyEmoji').value=row.item_emoji||'🍬';$('#adminCandyDesc').value=row.description||'';$('#adminCandyImageUrl').value=row.image_url||'';const im=$('#adminCandyImagePreview');im.src=row.image_url||'';im.hidden=!row.image_url;$('#adminCandyImage').value='';$('#adminCandyFormTitle').textContent='✏️ Редактирование конфеты / десерта';$('#adminCandySubmit').textContent='СОХРАНИТЬ ИЗМЕНЕНИЯ';$('#adminCandyCancel').hidden=false;candyValuePreview();$('#adminCandyForm').scrollIntoView({behavior:'smooth',block:'start'});}
+async function exportAdminCandies(){if(!ADMIN_CUSTOM_ITEMS.length)await refreshAdminCustomItems();const rows=ADMIN_CUSTOM_ITEMS;if(!rows.length){toast('Нет добавленных конфет для экспорта');return;}const lines=['ФАНТИК-КАЗИНО — пользовательские конфеты и десерты','Формат: одна запись на предмет; данные можно использовать при создании новых кейсов и коллекций.',''];for(const x of rows){const clean=v=>String(v??'').replace(/\r?\n/g,' ').replace(/\|/g,'\\|');lines.push(`[ITEM]`,`ID: ${clean(x.item_id)}`,`Название: ${clean(x.item_name)}`,`Тип: ${x.item_type==='dessert'?'Десерт':'Конфета'}`,`Эмодзи: ${clean(x.item_emoji)}`,`Цена, ₽: ${x.reference_price_rub}`,`Оценка: ${x.rating}/10`,`Игровая стоимость: ${x.item_value} фантиков`,`Описание: ${clean(x.description)}`,`Изображение: ${clean(x.image_url)}`,'');}const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='fantik-custom-candies.txt';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);}
 async function refreshAdminPromos(){if(!IS_ADMIN)return;const el=$('#adminPromoList');el.innerHTML='<p class="mut">Загружаю промокоды…</p>';try{const rows=await cloudRpc('fantik_admin_list_promos',{});if(!rows?.length){el.innerHTML='<p class="mut">Промокодов пока нет.</p>';return}el.innerHTML=rows.map(x=>`<div class="admin-list-row"><div><strong>${escHtml(x.code)}</strong><small>${escHtml(x.reward_type)} · ${fmt(Number(x.reward_amount)||0)} 🍬</small></div><button class="${x.enabled?'':'off'}" data-admin-promo="${escHtml(x.code)}" data-enabled="${x.enabled?'false':'true'}">${x.enabled?'Отключить':'Включить'}</button></div>`).join('');}catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}}
 async function refreshAdminCases(){if(!IS_ADMIN)return;const el=$('#adminCaseList');el.innerHTML='<p class="mut">Загружаю кейсы…</p>';try{const rows=await cloudRpc('fantik_admin_list_cases',{});if(!rows?.length){el.innerHTML='<p class="mut">Кейсов пока нет.</p>';return}el.innerHTML=rows.map(x=>`<div class="admin-list-row"><div><strong>${escHtml(x.case_emoji||'📦')} ${escHtml(x.case_name)}</strong><small>${x.is_custom?'Собственный':'Стандартный'} · ${fmt(Number(x.base_price)||0)} 🍬 · ${(x.items||[]).length} предметов · ${escHtml(x.case_rarity||'ОБЫЧНЫЙ')} · ${x.is_enabled?'В игре':'Скрыт'}</small></div><div class="admin-case-actions"><button type="button" class="${x.is_enabled?'':'off'}" data-case-toggle="${escHtml(x.case_id)}" data-enabled="${x.is_enabled?'false':'true'}">${x.is_enabled?'Выключить':'Включить'}</button><button type="button" data-case-edit="${escHtml(x.case_id)}">Изменить</button><button type="button" data-case-duplicate="${escHtml(x.case_id)}">Дубль</button>${x.is_custom?`<button type="button" class="off" data-case-delete="${escHtml(x.case_id)}">Удалить</button>`:''}</div></div>`).join('');}catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}}
 function renderAdminItemPicker(){const el=$('#adminItemPicker');if(!el)return;const q=($('#adminItemSearch')?.value||'').trim().toLocaleLowerCase('ru');const rows=ADMIN_ITEMS.filter(x=>(x.item_name+' '+x.item_id).toLocaleLowerCase('ru').includes(q));el.innerHTML=rows.map(x=>{const v=ADMIN_EDIT_ITEMS.get(x.item_id);return `<label class="admin-item-row"><input type="checkbox" data-admin-pick="${escHtml(x.item_id)}" ${v?'checked':''}><span>${escHtml(x.item_emoji||'🍬')}</span><span class="admin-item-name" title="${escHtml(x.item_name)}">${escHtml(x.item_name)}<small class="admin-item-value"> · ${fmt(Number(x.item_value))} 🍬</small></span><input type="number" min="0.001" max="1000000" step="0.001" value="${v?Number(v.weight):1}" data-admin-weight="${escHtml(x.item_id)}" aria-label="Вес ${escHtml(x.item_name)}"></label>`}).join('')||'<p class="mut">Ничего не найдено.</p>';}
@@ -2084,7 +2156,13 @@ function importAdminCaseTxtText(raw){
  $('#adminCaseForm').scrollIntoView({behavior:'smooth',block:'start'});
  return true;
 }
-async function renderAdmin(){if(!IS_ADMIN){toast('Администраторский доступ не подтверждён сервером.');return}$('#admin').hidden=false;$('#adminPromoStatus').textContent='';$('#adminCaseStatus').textContent='';try{const [items]=await Promise.all([cloudRpc('fantik_admin_list_items',{}),refreshAdminPromos(),refreshAdminCases(),refreshAdminCollections(),refreshAdminAuthors()]);ADMIN_ITEMS=Array.isArray(items)?items:[];renderAdminItemPicker();}catch(e){toast('Не удалось загрузить админ-панель: '+e.message)}}
+async function renderAdmin(){if(!IS_ADMIN){toast('Администраторский доступ не подтверждён сервером.');return}$('#admin').hidden=false;$('#adminPromoStatus').textContent='';$('#adminCaseStatus').textContent='';try{const [items]=await Promise.all([cloudRpc('fantik_admin_list_items',{}),refreshAdminPromos(),refreshAdminCases(),refreshAdminCollections(),refreshAdminAuthors(),refreshAdminCustomItems(),refreshAdminStats()]);ADMIN_ITEMS=Array.isArray(items)?items:[];renderAdminItemPicker();if(!ADMIN_STATS_TIMER)ADMIN_STATS_TIMER=setInterval(refreshAdminStats,15000);}catch(e){toast('Не удалось загрузить админ-панель: '+e.message)}}
+['adminCandyName','adminCandyPriceRub','adminCandyEmoji','adminCandyDesc','adminCandyImageUrl'].forEach(id=>$('#'+id).addEventListener('input',candyValuePreview));['adminCandyRating','adminCandyType'].forEach(id=>$('#'+id).addEventListener('change',candyValuePreview));
+$('#adminCandyImage').addEventListener('change',()=>{const f=$('#adminCandyImage').files?.[0],im=$('#adminCandyImagePreview');if(f){im.src=URL.createObjectURL(f);im.hidden=false;candyValuePreview()}});
+$('#adminCandyImageUrl').addEventListener('input',()=>{const v=$('#adminCandyImageUrl').value.trim(),im=$('#adminCandyImagePreview');if(/^https?:\/\//i.test(v)){im.src=v;im.hidden=false}else if(!$('#adminCandyImage').files?.length)im.hidden=true;candyValuePreview();});
+$('#adminCandyCancel').onclick=resetAdminCandyForm;$('#adminRefreshCandies').onclick=refreshAdminCustomItems;$('#adminExportCandies').onclick=exportAdminCandies;$('#adminRefreshStats').onclick=refreshAdminStats;
+$('#adminCandyForm').addEventListener('submit',async e=>{e.preventDefault();if(!IS_ADMIN)return;const st=$('#adminCandyStatus');st.textContent='Сохраняю предмет…';try{let imageUrl=$('#adminCandyImageUrl').value.trim();const uploaded=await uploadAdminImage('#adminCandyImage','cases');if(uploaded)imageUrl=uploaded;const payload={p_item_id:$('#adminCandyId').value||null,p_item_name:$('#adminCandyName').value.trim(),p_price_rub:Number($('#adminCandyPriceRub').value),p_rating:Number($('#adminCandyRating').value),p_item_emoji:$('#adminCandyEmoji').value.trim()||'🍬',p_item_type:$('#adminCandyType').value,p_description:$('#adminCandyDesc').value.trim(),p_image_url:imageUrl||null};const result=await cloudRpc('fantik_admin_save_custom_item',payload);const successMessage='✅ «'+result.item_name+'» сохранено · '+fmt(Number(result.item_value))+' фантиков.';resetAdminCandyForm();st.textContent=successMessage;await loadCustomCandyCatalog();await refreshEconomy();await loadCustomCases();const [items]=await Promise.all([cloudRpc('fantik_admin_list_items',{}),refreshAdminCustomItems()]);ADMIN_ITEMS=Array.isArray(items)?items:[];renderAdminItemPicker();st.textContent=successMessage;}catch(err){st.textContent='❌ '+err.message}});
+$('#adminCandyList').addEventListener('click',e=>{const b=e.target.closest('[data-candy-edit]');if(!b||!IS_ADMIN)return;const row=ADMIN_CUSTOM_ITEMS.find(x=>x.item_id===b.dataset.candyEdit);if(row)editAdminCandy(row)});
 $('#adminPromoForm').addEventListener('submit',async e=>{e.preventDefault();if(!IS_ADMIN)return;const code=$('#adminPromoCode').value.trim().toUpperCase(),type=$('#adminPromoType').value,amount=Number($('#adminPromoAmount').value)||0,status=$('#adminPromoStatus');status.textContent='Создаю промокод…';try{const result=await cloudRpc('fantik_admin_create_promo',{p_code:code,p_reward_type:type,p_reward_amount:amount});status.textContent='✅ Промокод '+result.code+' создан.';$('#adminPromoCode').value='';await refreshAdminPromos();}catch(err){status.textContent='❌ '+err.message}});
 $('#adminPromoList').addEventListener('click',async e=>{const b=e.target.closest('[data-admin-promo]');if(!b||!IS_ADMIN)return;try{await cloudRpc('fantik_admin_set_promo_enabled',{p_code:b.dataset.adminPromo,p_enabled:b.dataset.enabled==='true'});await refreshAdminPromos();toast('Статус промокода обновлён');}catch(err){toast('Не удалось изменить промокод: '+err.message)}});
 $('#adminRefreshPromos').onclick=refreshAdminPromos;$('#adminRefreshCases').onclick=refreshAdminCases;$('#adminRefreshCollections').onclick=refreshAdminCollections;
@@ -2112,6 +2190,7 @@ $('#adminCollectionCancel').onclick=()=>{ $('#adminCollectionForm').reset();$('#
 $('#adminCollectionForm').addEventListener('submit',async e=>{e.preventDefault();if(!IS_ADMIN)return;const st=$('#adminCollectionStatus');st.textContent='Сохраняю коллекцию…';try{let cover=$('#adminCollectionImageUrl').value;const up=await uploadAdminImage('#adminCollectionImage','collections');if(up)cover=up;const r=await cloudRpc('fantik_admin_save_case_collection',{p_collection_id:$('#adminCollectionId').value||null,p_name:$('#adminCollectionName').value.trim(),p_description:$('#adminCollectionDesc').value.trim(),p_cover_url:cover||null,p_sort_order:Number($('#adminCollectionOrder').value)||0});st.textContent='✅ Коллекция «'+r.collection_name+'» сохранена.';$('#adminCollectionForm').reset();$('#adminCollectionId').value='';$('#adminCollectionImageUrl').value='';$('#adminCollectionImagePreview').hidden=true;$('#adminCollectionFormTitle').textContent='🗃️ Новая коллекция';$('#adminCollectionCancel').hidden=true;await refreshAdminCollections();}catch(err){st.textContent='❌ '+err.message}});
 function elDisableCollectionOrder(collectionId,disabled){document.querySelectorAll('[data-collection-id]').forEach(b=>{if(b.dataset.collectionId===collectionId)b.disabled=disabled;});} $('#adminCollectionList').addEventListener('click',async e=>{const edit=e.target.closest('[data-collection-edit]'),del=e.target.closest('[data-collection-delete]'),up=e.target.closest('[data-collection-case-up]'),down=e.target.closest('[data-collection-case-down]');if(!IS_ADMIN)return;try{if(up||down){const btn=up||down,collectionId=btn.dataset.collectionId,index=Number(btn.dataset.caseIndex),collection=ADMIN_COLLECTIONS.find(c=>c.collection_id===collectionId);if(!collection||!Array.isArray(collection.case_ids))return;const ids=[...collection.case_ids],nextIndex=index+(up?-1:1);if(nextIndex<0||nextIndex>=ids.length)return;[ids[index],ids[nextIndex]]=[ids[nextIndex],ids[index]];elDisableCollectionOrder(collectionId,true);try{await cloudRpc('fantik_admin_reorder_case_collection_items',{p_collection_id:collectionId,p_case_ids:ids});await Promise.all([refreshAdminCollections(),loadCustomCases()]);toast('Порядок кейсов сохранён');}finally{elDisableCollectionOrder(collectionId,false);}}else if(edit){const x=ADMIN_COLLECTIONS.find(c=>c.collection_id===edit.dataset.collectionEdit);if(!x)return;$('#adminCollectionId').value=x.collection_id;$('#adminCollectionName').value=x.collection_name;$('#adminCollectionDesc').value=x.collection_description||'';$('#adminCollectionOrder').value=x.sort_order||0;$('#adminCollectionImageUrl').value=x.cover_image_url||'';const im=$('#adminCollectionImagePreview');im.src=x.cover_image_url||'';im.hidden=!x.cover_image_url;$('#adminCollectionFormTitle').textContent='✏️ Изменить коллекцию';$('#adminCollectionCancel').hidden=false;$('#adminCollectionForm').scrollIntoView({behavior:'smooth',block:'start'});}else if(del){if(!confirm('Удалить коллекцию? Кейсы сохранятся и станут без коллекции.'))return;await cloudRpc('fantik_admin_delete_case_collection',{p_collection_id:del.dataset.collectionDelete});await Promise.all([refreshAdminCollections(),loadCustomCases()]);toast('Коллекция удалена');}}catch(err){toast('Ошибка: '+err.message)}});
 /* ===== профильные темы и UI ===== */
+candyValuePreview();
 renderAccountUpgrades();updateProgress();
 
 rdraw();
