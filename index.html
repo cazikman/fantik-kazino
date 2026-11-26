@@ -640,6 +640,24 @@ header>.bal{grid-area:balance;white-space:nowrap}
   header>.logo img{width:148px}
 }
 
+/* Авторизация: больше воздуха между элементами и удобная прокрутка на низких экранах. */
+#login{align-items:start}
+#login>.lcard{margin:auto 0;padding:26px 24px;gap:16px}
+#login .auth-brand{margin-bottom:5px;padding-top:7px;padding-bottom:13px}
+#login .auth-brand img{width:min(100%,320px);max-height:118px}
+#login label{gap:7px;font-size:14px}
+#login input{padding:12px 13px}
+#login .avs{gap:8px;margin:3px 0 5px}
+#login .avs button{padding:8px 10px}
+#login #forgotPasswordBtn{justify-self:center;padding:11px 18px;margin:2px 0}
+#login #lgo,#login #registerBtn{padding:14px 17px}
+#login #authLoginForm>p{line-height:1.5;margin:2px 0}
+@media(max-width:599px){
+  #login{padding:14px}
+  #login>.lcard{padding:24px 20px;gap:15px}
+  #login .auth-brand img{width:min(100%,300px);max-height:112px}
+}
+
 /* Магазин: единая сетка, ровные карточки и ясная зона покупки. */
 #shop{min-width:0}
 .shop-heading{
