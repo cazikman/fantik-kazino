@@ -2145,9 +2145,13 @@ let ADMIN_AUTHORS=[],ADMIN_SELECTED_AUTHOR=null,ADMIN_PAYOUT_PENDING=null;
 const authorNum=v=>fmt(Math.max(0,Number(v)||0));
 function authorById(id){return ADMIN_AUTHORS.find(x=>String(x.author_id)===String(id))||null;}
 function updateAuthorSelects(){
- const options='<option value="">Выбери автора</option>'+ADMIN_AUTHORS.map(a=>`<option value="${escHtml(a.author_id)}">${escHtml(a.display_name||a.author_id)}</option>`).join('');
- $('#adminAuthorCodeOwner').innerHTML=options;
- $('#adminPayoutAuthor').innerHTML=options;
+ const activeAuthors=ADMIN_AUTHORS.filter(a=>a.is_enabled!==false);
+ const codeOptions=activeAuthors.length
+  ? '<option value="">Выбери активного автора</option>'+activeAuthors.map(a=>`<option value="${escHtml(a.author_id)}">${escHtml(a.display_name||a.author_id)}</option>`).join('')
+  : '<option value="">Нет активных авторов</option>';
+ const payoutOptions='<option value="">Выбери автора</option>'+ADMIN_AUTHORS.map(a=>`<option value="${escHtml(a.author_id)}">${escHtml(a.display_name||a.author_id)}${a.is_enabled===false?' · отключён':''}</option>`).join('');
+ $('#adminAuthorCodeOwner').innerHTML=codeOptions;
+ $('#adminPayoutAuthor').innerHTML=payoutOptions;
 }
 async function refreshAdminAuthors(){
  if(!IS_ADMIN)return;
@@ -2157,7 +2161,7 @@ async function refreshAdminAuthors(){
   if(!ADMIN_AUTHORS.length){el.innerHTML='<p class="mut">Авторов пока нет. Добавь автора по UUID аккаунта.</p>';return;}
   el.innerHTML=ADMIN_AUTHORS.map(a=>{
    const codes=Array.isArray(a.codes)?a.codes:[];
-   return `<div class="admin-list-row"><div><strong>${escHtml(a.display_name||'Автор')}</strong><small>${escHtml(a.author_id)}</small><small>Игроков: ${authorNum(a.referrals_count)} · Оборот: ${authorNum(a.stake_total)} 🍬</small><small>Начислено: ${authorNum(a.commission_total)} · Выплачено: ${authorNum(a.paid_total)} · Доступно: <b>${authorNum(a.available_total)} 🍬</b></small><div class="author-code-list">${codes.map(c=>`<span class="author-code-pill ${c.enabled?'':'off'}">${escHtml(c.code)}</span>`).join('')||'<small>Кодов пока нет</small>'}</div></div><div class="admin-case-actions"><button type="button" data-author-select="${escHtml(a.author_id)}">История</button><button type="button" class="${a.is_enabled?'':'off'}" data-author-toggle="${escHtml(a.author_id)}" data-enabled="${a.is_enabled?'false':'true'}">${a.is_enabled?'Отключить':'Включить'}</button>${codes.map(c=>`<button type="button" class="${c.enabled?'':'off'}" data-author-code-toggle="${escHtml(c.code)}" data-enabled="${c.enabled?'false':'true'}">${c.enabled?'Выкл.':'Вкл.'} ${escHtml(c.code)}</button><button type="button" class="off" data-author-code-delete="${escHtml(c.code)}">Удалить код ${escHtml(c.code)}</button>`).join('')}<button type="button" class="off" data-author-delete="${escHtml(a.author_id)}">Удалить автора</button></div></div>`;
+   return `<div class="admin-list-row"><div><strong>${escHtml(a.display_name||'Автор')} ${a.is_enabled===false?'<span class="mut">· ОТКЛЮЧЁН</span>':''}</strong><small>${escHtml(a.author_id)}</small><small>Игроков: ${authorNum(a.referrals_count)} · Оборот: ${authorNum(a.stake_total)} 🍬</small><small>Начислено: ${authorNum(a.commission_total)} · Выплачено: ${authorNum(a.paid_total)} · Доступно: <b>${authorNum(a.available_total)} 🍬</b></small><div class="author-code-list">${codes.map(c=>`<span class="author-code-pill ${c.enabled?'':'off'}">${escHtml(c.code)}</span>`).join('')||'<small>Кодов пока нет</small>'}</div></div><div class="admin-case-actions"><button type="button" data-author-select="${escHtml(a.author_id)}">История</button><button type="button" class="${a.is_enabled?'':'off'}" data-author-toggle="${escHtml(a.author_id)}" data-enabled="${a.is_enabled?'false':'true'}">${a.is_enabled?'Отключить':'Включить'}</button>${codes.map(c=>`<button type="button" class="${c.enabled?'':'off'}" data-author-code-toggle="${escHtml(c.code)}" data-enabled="${c.enabled?'false':'true'}">${c.enabled?'Выкл.':'Вкл.'} ${escHtml(c.code)}</button><button type="button" class="off" data-author-code-delete="${escHtml(c.code)}">Удалить код ${escHtml(c.code)}</button>`).join('')}<button type="button" class="off" data-author-delete="${escHtml(a.author_id)}">Удалить автора</button></div></div>`;
   }).join('');
   if(ADMIN_SELECTED_AUTHOR){const a=authorById(ADMIN_SELECTED_AUTHOR);if(a)await loadAdminAuthorHistory(a.author_id);else ADMIN_SELECTED_AUTHOR=null;}
  }catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`;}
@@ -2183,7 +2187,7 @@ $('#adminAuthorForm').addEventListener('submit',async e=>{
  catch(err){st.textContent='❌ '+err.message;}
 });
 $('#adminAuthorCodeForm').addEventListener('submit',async e=>{
- e.preventDefault();if(!IS_ADMIN)return;const st=$('#adminAuthorCodeStatus'),authorId=$('#adminAuthorCodeOwner').value,code=$('#adminAuthorCode').value.trim().toUpperCase();if(!authorId){st.textContent='Сначала выбери автора.';return;}st.textContent='Создаю авторский код…';
+ e.preventDefault();if(!IS_ADMIN)return;const st=$('#adminAuthorCodeStatus'),authorId=$('#adminAuthorCodeOwner').value,code=$('#adminAuthorCode').value.trim().toUpperCase();if(!authorId){st.textContent='Нет активного автора для выпуска кода.';return;}const owner=authorById(authorId);if(!owner||owner.is_enabled===false){st.textContent='Отключённому автору нельзя выпускать новые коды. Сначала включи автора.';updateAuthorSelects();return;}st.textContent='Создаю авторский код…';
  try{await cloudRpc('fantik_admin_create_author_code',{p_author_id:authorId,p_code:code});st.textContent='✅ Авторский код '+code+' создан.';$('#adminAuthorCode').value='';await refreshAdminAuthors();}
  catch(err){st.textContent='❌ '+err.message;}
 });
