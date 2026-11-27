@@ -241,7 +241,7 @@ body.low-fx #mega .rays,body.low-fx #mega .shine,body.low-fx #mega .ring{display
 @media(max-width:520px){.admin-stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .admin-case-actions button{font-size:10px;padding:6px 8px}
 .admin-image-preview{width:100%;max-height:150px;object-fit:contain;border:1px dashed #59457f;border-radius:10px;background:#0b071d;padding:6px}
-.admin-collection-row{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px;border-radius:9px;background:#0e0923;border:1px solid #38295a}
+.admin-collection-row .admin-case-actions{align-items:center;flex-wrap:nowrap}.admin-collection-row .admin-case-actions button{min-width:30px}.admin-collection-row .admin-case-actions button[aria-label]{font-size:16px;padding:5px 8px}.admin-collection-row{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:9px;align-items:center;padding:8px;border-radius:9px;background:#0e0923;border:1px solid #38295a}
 .admin-collection-row img{width:48px;height:48px;object-fit:cover;border-radius:7px}
 .admin-collection-row strong{display:block}.admin-collection-row small{display:block;color:var(--mut);font-size:10px}
 .admin-editor-note{font-size:11px;color:#ffe49b}.admin-collection-main{min-width:0}.admin-collection-cases{display:grid;gap:4px;margin-top:8px;padding:7px;border:1px solid #38295a;border-radius:9px;background:#09071a}.admin-collection-cases-title{font-size:10px;color:#d7c8ff;font-weight:800;margin-bottom:2px}.admin-collection-case{display:flex;align-items:center;justify-content:space-between;gap:7px;min-width:0;padding:4px 5px;border-radius:7px;background:#17112b}.admin-collection-case-name{min-width:0;overflow-wrap:anywhere;font-size:11px}.admin-collection-case-actions{display:flex;gap:4px;flex:none}.admin-collection-case-actions button{width:28px;height:26px;padding:0;font-size:15px;line-height:1}.admin-collection-case-actions button:disabled{opacity:.3;cursor:not-allowed}
@@ -965,7 +965,7 @@ header>.bal{grid-area:balance;white-space:nowrap}
    <h3 id="adminCollectionFormTitle">🗃️ Новая коллекция</h3><input id="adminCollectionId" type="hidden" value="">
    <label>Название коллекции<input id="adminCollectionName" maxlength="48" required placeholder="Например, Летняя серия"></label>
    <label>Описание<textarea id="adminCollectionDesc" maxlength="240" rows="2" placeholder="Что объединяет кейсы этой серии"></textarea></label>
-   <label>Порядок отображения<input id="adminCollectionOrder" type="number" value="0" step="1"></label>
+   <p class="mut">Новая коллекция автоматически появится первой. Порядок существующих коллекций можно менять стрелками ниже.</p>
    <div class="admin-collection-schedule"><label>Начало публикации<input id="adminCollectionStartsAt" type="datetime-local"></label><label>Окончание события<input id="adminCollectionEndsAt" type="datetime-local"></label></div>
    <p class="mut">Оставь даты пустыми, чтобы коллекция работала без расписания. Будущие события появятся с таймером, завершённые останутся в архиве.</p>
    <label>Обложка коллекции<input id="adminCollectionImage" type="file" accept="image/png,image/jpeg,image/webp,image/gif"></label>
@@ -2140,7 +2140,7 @@ function editAdminCase(row){$('#adminCaseId').value=row.case_id;$('#adminCaseNam
 async function uploadAdminImage(inputId,pathPrefix){const file=$(inputId).files?.[0];if(!file)return null;if(!IS_ADMIN)throw new Error('Нет прав администратора');if(file.size>5*1024*1024)throw new Error('Изображение больше 5 МБ');if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error('Поддерживаются PNG, JPG, WEBP и GIF');const ext=({ 'image/jpeg':'jpg','image/png':'png','image/webp':'webp','image/gif':'gif'})[file.type];const path=`${pathPrefix}/${authUser.id}/${Date.now()}-${Math.random().toString(36).slice(2,8)}.${ext}`;const {error}=await sb.storage.from('fantik-case-art').upload(path,file,{upsert:true,contentType:file.type});if(error)throw new Error(error.message);return sb.storage.from('fantik-case-art').getPublicUrl(path).data.publicUrl;}
 function adminCollectionDate(v){if(!v)return 'не задано';const d=new Date(v);return Number.isNaN(d.getTime())?'не задано':d.toLocaleString('ru-RU',{dateStyle:'short',timeStyle:'short'});}
 function adminCollectionState(x){const now=Date.now(),start=x.starts_at?new Date(x.starts_at).getTime():null,end=x.ends_at?new Date(x.ends_at).getTime():null;if(x.is_enabled===false)return 'Отключена';if(Number.isFinite(end)&&end<=now)return 'Архив';if(Number.isFinite(start)&&start>now)return 'Запланирована';return 'Активна';}
-async function refreshAdminCollections(){if(!IS_ADMIN)return;const el=$('#adminCollectionList');el.innerHTML='<p class="mut">Загружаю коллекции…</p>';try{const [collections,cases]=await Promise.all([cloudRpc('fantik_admin_list_case_collections',{}),cloudRpc('fantik_admin_list_cases',{})]);ADMIN_COLLECTIONS=collections||[];const caseNames=new Map((cases||[]).map(c=>[String(c.case_id),{name:c.case_name||c.case_id,emoji:c.case_emoji||'📦'}]));$('#adminCaseCollection').innerHTML='<option value="">Без коллекции</option>'+ADMIN_COLLECTIONS.filter(x=>x.is_enabled!==false).map(x=>`<option value="${x.collection_id}">${escHtml(x.collection_name)}</option>`).join('');if(!ADMIN_COLLECTIONS.length){el.innerHTML='<p class="mut">Коллекций пока нет. Создай первую ниже.</p>';return}el.innerHTML=ADMIN_COLLECTIONS.map(x=>{const ids=Array.isArray(x.case_ids)?x.case_ids:[];const caseRows=ids.map((id,i)=>{const c=caseNames.get(String(id))||{name:id,emoji:'📦'};return `<div class="admin-collection-case"><span class="admin-collection-case-name">${escHtml(c.emoji)} ${escHtml(c.name)}</span><span class="admin-collection-case-actions"><button type="button" data-collection-case-up="${escHtml(id)}" data-collection-id="${x.collection_id}" data-case-index="${i}" aria-label="Переместить выше" ${i===0?'disabled':''}>↑</button><button type="button" data-collection-case-down="${escHtml(id)}" data-collection-id="${x.collection_id}" data-case-index="${i}" aria-label="Переместить ниже" ${i===ids.length-1?'disabled':''}>↓</button></span></div>`}).join('');const state=adminCollectionState(x);return `<div class="admin-collection-row">${x.cover_image_url?`<img src="${escHtml(x.cover_image_url)}" alt="">`:'<span>🗃️</span>'}<div class="admin-collection-main"><strong>${escHtml(x.collection_name)}</strong><small>${ids.length} кейсов · порядок ${Number(x.sort_order)||0} · ${state}</small><small>Начало: ${adminCollectionDate(x.starts_at)} · Окончание: ${adminCollectionDate(x.ends_at)}</small><small>${escHtml(x.collection_description||'')}</small>${ids.length?`<div class="admin-collection-cases"><div class="admin-collection-cases-title">Порядок кейсов в коллекции</div>${caseRows}</div>`:'<small>В коллекции пока нет кейсов.</small>'}</div><div class="admin-case-actions"><button type="button" data-collection-edit="${x.collection_id}">Изменить</button><button type="button" class="off" data-collection-delete="${x.collection_id}">Удалить</button></div></div>`}).join('');}catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}}
+async function refreshAdminCollections(){if(!IS_ADMIN)return;const el=$('#adminCollectionList');el.innerHTML='<p class="mut">Загружаю коллекции…</p>';try{const [collections,cases]=await Promise.all([cloudRpc('fantik_admin_list_case_collections',{}),cloudRpc('fantik_admin_list_cases',{})]);ADMIN_COLLECTIONS=(collections||[]).slice().sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));const caseNames=new Map((cases||[]).map(c=>[String(c.case_id),{name:c.case_name||c.case_id,emoji:c.case_emoji||'📦'}]));$('#adminCaseCollection').innerHTML='<option value="">Без коллекции</option>'+ADMIN_COLLECTIONS.filter(x=>x.is_enabled!==false).map(x=>`<option value="${x.collection_id}">${escHtml(x.collection_name)}</option>`).join('');if(!ADMIN_COLLECTIONS.length){el.innerHTML='<p class="mut">Коллекций пока нет. Создай первую ниже.</p>';return}el.innerHTML=ADMIN_COLLECTIONS.map(x=>{const ids=Array.isArray(x.case_ids)?x.case_ids:[];const caseRows=ids.map((id,i)=>{const c=caseNames.get(String(id))||{name:id,emoji:'📦'};return `<div class="admin-collection-case"><span class="admin-collection-case-name">${escHtml(c.emoji)} ${escHtml(c.name)}</span><span class="admin-collection-case-actions"><button type="button" data-collection-case-up="${escHtml(id)}" data-collection-id="${x.collection_id}" data-case-index="${i}" aria-label="Переместить выше" ${i===0?'disabled':''}>↑</button><button type="button" data-collection-case-down="${escHtml(id)}" data-collection-id="${x.collection_id}" data-case-index="${i}" aria-label="Переместить ниже" ${i===ids.length-1?'disabled':''}>↓</button></span></div>`}).join('');const state=adminCollectionState(x);return `<div class="admin-collection-row">${x.cover_image_url?`<img src="${escHtml(x.cover_image_url)}" alt="">`:'<span>🗃️</span>'}<div class="admin-collection-main"><strong>${escHtml(x.collection_name)}</strong><small>${ids.length} кейсов · порядок ${Number(x.sort_order)||0} · ${state}</small><small>Начало: ${adminCollectionDate(x.starts_at)} · Окончание: ${adminCollectionDate(x.ends_at)}</small><small>${escHtml(x.collection_description||'')}</small>${ids.length?`<div class="admin-collection-cases"><div class="admin-collection-cases-title">Порядок кейсов в коллекции</div>${caseRows}</div>`:'<small>В коллекции пока нет кейсов.</small>'}</div><div class="admin-case-actions"><button type="button" data-collection-up="${x.collection_id}" aria-label="Переместить коллекцию выше" ${ADMIN_COLLECTIONS.indexOf(x)===0?'disabled':''}>↑</button><button type="button" data-collection-down="${x.collection_id}" aria-label="Переместить коллекцию ниже" ${ADMIN_COLLECTIONS.indexOf(x)===ADMIN_COLLECTIONS.length-1?'disabled':''}>↓</button><button type="button" data-collection-edit="${x.collection_id}">Изменить</button><button type="button" class="off" data-collection-delete="${x.collection_id}">Удалить</button></div></div>`}).join('');}catch(e){el.innerHTML=`<p class="mut">Ошибка: ${escHtml(e.message)}</p>`}}
 let ADMIN_AUTHORS=[],ADMIN_SELECTED_AUTHOR=null,ADMIN_PAYOUT_PENDING=null;
 const authorNum=v=>fmt(Math.max(0,Number(v)||0));
 function authorById(id){return ADMIN_AUTHORS.find(x=>String(x.author_id)===String(id))||null;}
@@ -2359,8 +2359,107 @@ $('#adminCaseList').addEventListener('click',async e=>{const toggle=e.target.clo
 $('#adminCollectionImage').addEventListener('change',()=>{const f=$('#adminCollectionImage').files?.[0],im=$('#adminCollectionImagePreview');if(f){im.src=URL.createObjectURL(f);im.hidden=false}});
 function resetAdminCollectionForm(){ $('#adminCollectionForm').reset();$('#adminCollectionId').value='';$('#adminCollectionImageUrl').value='';$('#adminCollectionImagePreview').hidden=true;$('#adminCollectionFormTitle').textContent='🗃️ Новая коллекция';$('#adminCollectionCancel').hidden=true;}
 $('#adminCollectionCancel').onclick=resetAdminCollectionForm;
-$('#adminCollectionForm').addEventListener('submit',async e=>{e.preventDefault();if(!IS_ADMIN)return;const st=$('#adminCollectionStatus');st.textContent='Сохраняю коллекцию…';try{const startValue=$('#adminCollectionStartsAt').value,endValue=$('#adminCollectionEndsAt').value;const startsAt=startValue?new Date(startValue):null,endsAt=endValue?new Date(endValue):null;if(startsAt&&Number.isNaN(startsAt.getTime()))throw new Error('Проверь дату начала');if(endsAt&&Number.isNaN(endsAt.getTime()))throw new Error('Проверь дату окончания');if(startsAt&&endsAt&&endsAt<=startsAt)throw new Error('Окончание события должно быть позже начала');let cover=$('#adminCollectionImageUrl').value;const up=await uploadAdminImage('#adminCollectionImage','collections');if(up)cover=up;const r=await cloudRpc('fantik_admin_save_case_collection',{p_collection_id:$('#adminCollectionId').value||null,p_name:$('#adminCollectionName').value.trim(),p_description:$('#adminCollectionDesc').value.trim(),p_cover_url:cover||null,p_sort_order:Number($('#adminCollectionOrder').value)||0,p_starts_at:startsAt?startsAt.toISOString():null,p_ends_at:endsAt?endsAt.toISOString():null});st.textContent='✅ Коллекция «'+r.collection_name+'» сохранена.';resetAdminCollectionForm();await refreshAdminCollections();await loadCustomCases();}catch(err){st.textContent='❌ '+err.message}});
-function elDisableCollectionOrder(collectionId,disabled){document.querySelectorAll('[data-collection-id]').forEach(b=>{if(b.dataset.collectionId===collectionId)b.disabled=disabled;});} $('#adminCollectionList').addEventListener('click',async e=>{const edit=e.target.closest('[data-collection-edit]'),del=e.target.closest('[data-collection-delete]'),up=e.target.closest('[data-collection-case-up]'),down=e.target.closest('[data-collection-case-down]');if(!IS_ADMIN)return;try{if(up||down){const btn=up||down,collectionId=btn.dataset.collectionId,index=Number(btn.dataset.caseIndex),collection=ADMIN_COLLECTIONS.find(c=>c.collection_id===collectionId);if(!collection||!Array.isArray(collection.case_ids))return;const ids=[...collection.case_ids],nextIndex=index+(up?-1:1);if(nextIndex<0||nextIndex>=ids.length)return;[ids[index],ids[nextIndex]]=[ids[nextIndex],ids[index]];elDisableCollectionOrder(collectionId,true);try{await cloudRpc('fantik_admin_reorder_case_collection_items',{p_collection_id:collectionId,p_case_ids:ids});await Promise.all([refreshAdminCollections(),loadCustomCases()]);toast('Порядок кейсов сохранён');}finally{elDisableCollectionOrder(collectionId,false);}}else if(edit){const x=ADMIN_COLLECTIONS.find(c=>c.collection_id===edit.dataset.collectionEdit);if(!x)return;$('#adminCollectionId').value=x.collection_id;$('#adminCollectionName').value=x.collection_name;$('#adminCollectionDesc').value=x.collection_description||'';$('#adminCollectionOrder').value=x.sort_order||0;const toLocalInput=v=>{if(!v)return '';const d=new Date(v);if(Number.isNaN(d.getTime()))return '';const z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+'T'+z(d.getHours())+':'+z(d.getMinutes())};$('#adminCollectionStartsAt').value=toLocalInput(x.starts_at);$('#adminCollectionEndsAt').value=toLocalInput(x.ends_at);$('#adminCollectionImageUrl').value=x.cover_image_url||'';const im=$('#adminCollectionImagePreview');im.src=x.cover_image_url||'';im.hidden=!x.cover_image_url;$('#adminCollectionFormTitle').textContent='✏️ Изменить коллекцию';$('#adminCollectionCancel').hidden=false;$('#adminCollectionForm').scrollIntoView({behavior:'smooth',block:'start'});}else if(del){if(!confirm('Удалить коллекцию? Кейсы сохранятся и станут без коллекции.'))return;await cloudRpc('fantik_admin_delete_case_collection',{p_collection_id:del.dataset.collectionDelete});await Promise.all([refreshAdminCollections(),loadCustomCases()]);toast('Коллекция удалена');}}catch(err){toast('Ошибка: '+err.message)}});
+async function saveAdminCollectionOrderRow(x,sortOrder){
+ return cloudRpc('fantik_admin_save_case_collection',{
+  p_collection_id:x.collection_id,
+  p_name:x.collection_name,
+  p_description:x.collection_description||'',
+  p_cover_url:x.cover_image_url||null,
+  p_sort_order:sortOrder,
+  p_starts_at:x.starts_at||null,
+  p_ends_at:x.ends_at||null
+ });
+}
+async function persistAdminCollectionOrder(rows){
+ // Сначала уводим все записи на уникальные временные позиции,
+ // затем назначаем плотную последовательность 0, 1, 2...
+ for(let i=0;i<rows.length;i++)await saveAdminCollectionOrderRow(rows[i],-1000000-i);
+ for(let i=0;i<rows.length;i++)await saveAdminCollectionOrderRow(rows[i],i);
+}
+$('#adminCollectionForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(!IS_ADMIN)return;
+ const st=$('#adminCollectionStatus'),editingId=$('#adminCollectionId').value||null;
+ st.textContent='Сохраняю коллекцию…';
+ try{
+  const startValue=$('#adminCollectionStartsAt').value,endValue=$('#adminCollectionEndsAt').value;
+  const startsAt=startValue?new Date(startValue):null,endsAt=endValue?new Date(endValue):null;
+  if(startsAt&&Number.isNaN(startsAt.getTime()))throw new Error('Проверь дату начала');
+  if(endsAt&&Number.isNaN(endsAt.getTime()))throw new Error('Проверь дату окончания');
+  if(startsAt&&endsAt&&endsAt<=startsAt)throw new Error('Окончание события должно быть позже начала');
+  let cover=$('#adminCollectionImageUrl').value;
+  const up=await uploadAdminImage('#adminCollectionImage','collections');if(up)cover=up;
+  const payload={
+   p_collection_id:editingId,
+   p_name:$('#adminCollectionName').value.trim(),
+   p_description:$('#adminCollectionDesc').value.trim(),
+   p_cover_url:cover||null,
+   p_sort_order:editingId?(Number(ADMIN_COLLECTIONS.find(x=>x.collection_id===editingId)?.sort_order)||0):-1000000,
+   p_starts_at:startsAt?startsAt.toISOString():null,
+   p_ends_at:endsAt?endsAt.toISOString():null
+  };
+  const r=await cloudRpc('fantik_admin_save_case_collection',payload);
+  if(!editingId){
+   const fresh=await cloudRpc('fantik_admin_list_case_collections',{});
+   const rows=(fresh||[]).filter(x=>x.collection_id!==r.collection_id)
+    .sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
+   // Новая коллекция становится нулевой, остальные сдвигаются вниз.
+   const newRow={collection_id:r.collection_id,collection_name:r.collection_name,
+    collection_description:payload.p_description,cover_image_url:cover||null,
+    starts_at:payload.p_starts_at,ends_at:payload.p_ends_at};
+   await persistAdminCollectionOrder([...rows,newRow]);
+  }
+  st.textContent='✅ Коллекция «'+r.collection_name+'» сохранена.';
+  resetAdminCollectionForm();
+  await refreshAdminCollections();await loadCustomCases();
+ }catch(err){st.textContent='❌ '+err.message}
+});
+function elDisableCollectionOrder(collectionId,disabled){
+ document.querySelectorAll('[data-collection-id]').forEach(b=>{if(b.dataset.collectionId===collectionId)b.disabled=disabled;});
+}
+function elDisableCollectionMove(disabled){
+ document.querySelectorAll('[data-collection-up],[data-collection-down]').forEach(b=>b.disabled=disabled);
+}
+$('#adminCollectionList').addEventListener('click',async e=>{
+ const edit=e.target.closest('[data-collection-edit]'),del=e.target.closest('[data-collection-delete]');
+ const up=e.target.closest('[data-collection-case-up]'),down=e.target.closest('[data-collection-case-down]');
+ const collectionUp=e.target.closest('[data-collection-up]'),collectionDown=e.target.closest('[data-collection-down]');
+ if(!IS_ADMIN)return;
+ try{
+  if(collectionUp||collectionDown){
+   const btn=collectionUp||collectionDown,id=btn.dataset[collectionUp?'collectionUp':'collectionDown'];
+   const rows=[...ADMIN_COLLECTIONS].sort((a,b)=>(Number(a.sort_order)||0)-(Number(b.sort_order)||0));
+   const index=rows.findIndex(x=>x.collection_id===id),next=index+(collectionUp?-1:1);
+   if(index<0||next<0||next>=rows.length)return;
+   [rows[index],rows[next]]=[rows[next],rows[index]];
+   elDisableCollectionMove(true);
+   try{await persistAdminCollectionOrder(rows);await refreshAdminCollections();await loadCustomCases();toast('Порядок коллекций сохранён');}
+   finally{elDisableCollectionMove(false);}
+  }else if(up||down){
+   const btn=up||down,collectionId=btn.dataset.collectionId,index=Number(btn.dataset.caseIndex),collection=ADMIN_COLLECTIONS.find(c=>c.collection_id===collectionId);
+   if(!collection||!Array.isArray(collection.case_ids))return;
+   const ids=[...collection.case_ids],nextIndex=index+(up?-1:1);
+   if(nextIndex<0||nextIndex>=ids.length)return;
+   [ids[index],ids[nextIndex]]=[ids[nextIndex],ids[index]];
+   elDisableCollectionOrder(collectionId,true);
+   try{await cloudRpc('fantik_admin_reorder_case_collection_items',{p_collection_id:collectionId,p_case_ids:ids});await Promise.all([refreshAdminCollections(),loadCustomCases()]);toast('Порядок кейсов сохранён');}
+   finally{elDisableCollectionOrder(collectionId,false);}
+  }else if(edit){
+   const x=ADMIN_COLLECTIONS.find(c=>c.collection_id===edit.dataset.collectionEdit);if(!x)return;
+   $('#adminCollectionId').value=x.collection_id;$('#adminCollectionName').value=x.collection_name;
+   $('#adminCollectionDesc').value=x.collection_description||'';
+   const toLocalInput=v=>{if(!v)return '';const d=new Date(v);if(Number.isNaN(d.getTime()))return '';const z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+'T'+z(d.getHours())+':'+z(d.getMinutes())};
+   $('#adminCollectionStartsAt').value=toLocalInput(x.starts_at);$('#adminCollectionEndsAt').value=toLocalInput(x.ends_at);
+   $('#adminCollectionImageUrl').value=x.cover_image_url||'';
+   const im=$('#adminCollectionImagePreview');im.src=x.cover_image_url||'';im.hidden=!x.cover_image_url;
+   $('#adminCollectionFormTitle').textContent='✏️ Изменить коллекцию';$('#adminCollectionCancel').hidden=false;
+   $('#adminCollectionForm').scrollIntoView({behavior:'smooth',block:'start'});
+  }else if(del){
+   if(!confirm('Удалить коллекцию? Кейсы сохранятся и станут без коллекции.'))return;
+   await cloudRpc('fantik_admin_delete_case_collection',{p_collection_id:del.dataset.collectionDelete});
+   await Promise.all([refreshAdminCollections(),loadCustomCases()]);toast('Коллекция удалена');
+  }
+ }catch(err){toast('Ошибка: '+err.message)}
+});
 /* ===== профильные темы и UI ===== */
 candyValuePreview();
 renderAccountUpgrades();updateProgress();
