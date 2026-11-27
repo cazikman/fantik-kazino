@@ -1509,10 +1509,12 @@ function rCases(){
   if(k.collectionId&&k.collectionId!==lastCollection){
    const title=state==='upcoming'?'СОБЫТИЕ НАЧНЁТСЯ ЧЕРЕЗ':state==='archived'?'АРХИВ · СОБЫТИЕ ЗАВЕРШЕНО':state==='disabled'?'КОЛЛЕКЦИЯ ОТКЛЮЧЕНА':k.collectionEndsAt?'ДО ЗАВЕРШЕНИЯ':'СОБЫТИЕ АКТИВНО';
    const stateClass=state==='upcoming'?'upcoming':state==='archived'?'archived':state==='disabled'?'disabled':'active';
+   const hasSchedule=!!(k.collectionStartsAt||k.collectionEndsAt);
    const timerTarget=state==='upcoming'?k.collectionStartsAt:(state==='active'?k.collectionEndsAt:null);
    const timer=timerTarget?`<span class="collection-event-countdown" data-event-countdown="${escHtml(k.collectionId)}" data-target="${escHtml(timerTarget)}">${collectionCountdownText(timerTarget)}</span>`:'';
    const archiveNote=state==='archived'?' · Кейсы доступны только для просмотра':state==='disabled'?' · Открытие временно недоступно':'';
-   cards+=`<div class="cases-heading collection-cases-heading"><div>${k.collectionCover?`<img src="${escHtml(k.collectionCover)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:10px;float:left;margin:0 10px 6px 0">`:''}<span class="cases-kicker">КОЛЛЕКЦИЯ КЕЙСОВ</span><h2>${escHtml(k.collectionName||'Коллекция')}</h2><p>${escHtml(k.collectionDescription||'Подборка кейсов')}</p><span class="collection-event-state ${stateClass}">${title} ${timer}</span>${archiveNote?`<p class="collection-archive-note">${archiveNote}</p>`:''}</div></div>`;
+   const eventBadge=hasSchedule?`<span class="collection-event-state ${stateClass}">${title} ${timer}</span>`:'';
+   cards+=`<div class="cases-heading collection-cases-heading"><div>${k.collectionCover?`<img src="${escHtml(k.collectionCover)}" alt="" style="width:44px;height:44px;object-fit:cover;border-radius:10px;float:left;margin:0 10px 6px 0">`:''}<span class="cases-kicker">КОЛЛЕКЦИЯ КЕЙСОВ</span><h2>${escHtml(k.collectionName||'Коллекция')}</h2><p>${escHtml(k.collectionDescription||'Подборка кейсов')}</p>${eventBadge}${archiveNote?`<p class="collection-archive-note">${archiveNote}</p>`:''}</div></div>`;
    lastCollection=k.collectionId;
   }
   const lockText=state==='upcoming'?'🔒 Скоро откроется':state==='archived'?'📁 Архив · просмотр':state==='disabled'?'🔒 Коллекция отключена':'';
